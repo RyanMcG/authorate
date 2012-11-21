@@ -13,6 +13,7 @@ Options:
   --version     print the version number
 """
 from docopt import docopt, printable_usage
+from sqlalchemy import create_engine
 import sys
 version = "0.1.0-SNAPSHOT"
 
@@ -35,18 +36,17 @@ def display_error(e):
     print(usage_str)
 
 
-def create_repo(repo_path):
-    """Do it!"""
-    run('mkdir -p %s' % repo_path)
-    with cd(repo_path):
-        res = run('git init --bare', shell=False)
-    return res
+def load_books(engine, author):
+    pass
 
 
-def snipeteer(arguments):
+def snippeteer(arguments):
     """Main function which delegates to fabric tasks."""
+    engine = create_engine('sqlite:///:memory:', echo=True)
     with open(arguments['<authors-file>'], 'r') as authors_file:
         authors = authors_file.readlines()
+        for author in authors:
+            load_books(engine, author)
 
 
 def main():
