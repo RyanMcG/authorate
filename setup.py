@@ -19,10 +19,10 @@ setup(name=name,
       long_description=long_description,
       url='https://github.com/RyanMcG/' + name,
       install_requires=requirements,
-      py_modules=['snippeteer'],
+      py_modules=['authorate'],
       entry_points={
           'console_scripts': [
-              'snippeteer = snippeteer:main'
+              'authorate = authorate:main'
           ]
       },
       classifiers=['Development Status :: 4 - Beta',

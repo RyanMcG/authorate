@@ -3,9 +3,9 @@
 Get a bunch of snippets from a list of authors.
 
 Usage:
-  snippeteer <authors-file> [<snippets-per-author>]
-  snippeteer --help
-  snippeteer --version
+  authorate load <authors-file> [<snippets-per-author>]
+  authorate --help
+  authorate --version
 
 Options:
   -h --help     show this help message and exit
@@ -25,28 +25,28 @@ def display_error(e):
     string.
 
     >>> display_error("Oh no!") # doctest: +ELLIPSIS
-    /*/ERROR:/*/ Oh no!
+    ERROR: Oh no!
     <BLANKLINE>
     Usage:
-      snippeteer <authors-file> [<snippets-per-author>]
-      snippeteer --help
-      snippeteer --version
+      ...
     """
-    print(red('ERROR:', True) + ' ' + e + "\n")
-    print(usage_str)
+    print("ERROR: {error}\n\n{usage}".format(error=e, usage=usage_str))
 
 
 def load_books(engine, author):
     pass
 
 
-def snippeteer(arguments):
+def authorate(arguments):
     """Main function which delegates to fabric tasks."""
     engine = create_engine('sqlite:///:memory:', echo=True)
-    with open(arguments['<authors-file>'], 'r') as authors_file:
-        authors = authors_file.readlines()
-        for author in authors:
-            load_books(engine, author)
+    if arguments['load']:
+        with open(arguments['<authors-file>'], 'r') as authors_file:
+            authors = authors_file.readlines()
+            for author in authors:
+                load_books(engine, author)
+    else:
+        display_error("No subcommand given.")
 
 
 def main():
@@ -54,7 +54,7 @@ def main():
     # Parse options based on docstring above. If it is the first usage then...
     arguments = docopt(__doc__, argv=sys.argv[1:], version=version)
     # continue by calling this function.
-    snippeteer(arguments)
+    authorate(arguments)
 
 if __name__ == '__main__':
     main()
