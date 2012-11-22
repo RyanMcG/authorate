@@ -62,5 +62,5 @@ class Snippet(PrettyBase, Base):
 
 
 def create_db(engine):
-    """Create
+    """Create the database and tables."""
     Base.metadata.create_all(engine)
