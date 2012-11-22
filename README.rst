@@ -27,7 +27,7 @@ To install authorate from source: ::
 If you want to run authorate from source you need to manually get the
 dependencies first. ::
 
-    # Assuming you are already in the Mr-Repo directory
+    # Assuming you are already in the authorate directory
     pip install -r requirements.txt
 
 Usage
