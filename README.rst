@@ -28,9 +28,42 @@ dependencies first. ::
     pip install -r requirements.txt
 
 Usage
------
+=====
+
+Typical usage consists of three steps.
+
+1.  Select authors to compare against.
+2.  Load snippets from those authors
+3.  Process them for metrics and build a model to use for classification.
+4.  Classify given snippets.
+
+1.  Select authors
+------------------
+
+You can select whatever authors you want with the restriction that they exist in
+the calibre database you are loading snippets from (*authorate* uses local
+calibre database to find books by the given authors).  A simple text file with
+one author per line is all that is necessary once your authors are selected.
+
+For an example see authors.sample.txt_.
+
+2.  Load snippets
+-----------------
+
+To load snippets simply use the ``load`` subcommand. ::
+
+    authorate load authors.sample.txt
+
+3.  Process snippets & Construct model
+--------------------------------------
 
 **TODO**
+
+4.  Classify user snippet
+-------------------------
+
+**TODO**
+
 License
 ~~~~~~~
 
