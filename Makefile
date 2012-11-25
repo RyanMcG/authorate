@@ -47,6 +47,7 @@ init_docs:
 	$(ECHO) ${SEPARATOR}
 	$(ECHO) "Initializing orphan ${DOCS_BRANCH} branch. . ."
 	$(ECHO) ${SEPARATOR}
+	-git stash
 	git checkout --orphan ${DOCS_BRANCH}
 	-git rm -rf .
 	echo "*" > .gitignore
@@ -55,6 +56,7 @@ init_docs:
 	$(ECHO)
 	-git commit -m "Initial commit."
 	git checkout -
+	-git stash pop
 
 clean:
 	rm -rf __pycache__ *.pyc .ropeproject
