@@ -36,3 +36,6 @@ nosetests.xml
 
 # Ignore sqlite database
 /*.db
+
+# Ignore the generated docs directory
+/docs
