@@ -3,7 +3,7 @@
 Get a bunch of snippets from a list of authors.
 
 Usage:
-  authorate load [-v -d <path-to-db> -p <path-prefix>] <paths-file> [<snippets-per-path>]
+  authorate load [-v --one -d <path-to-db> -p <path-prefix>] <paths-file> [<snippets-per-path>]
   authorate --help
   authorate --version
 
@@ -13,6 +13,7 @@ Options:
   -h, --help                  show this help message and exit
   -v, --verbose               print additional information
   --version                   print the version number
+  --one                       Use only one thread.
 """
 from docopt import docopt, printable_usage
 from sqlalchemy import create_engine
@@ -82,15 +83,21 @@ def num_snippets_per_book(books, snippet_count):
         yield (book.full_path, num_snippets)
 
 
-def load_snippets_from_books(books, snippet_count):
+def load_snippets_from_books(books, snippet_count, multi_thread=True):
     """Return snippet_count snippets from the given books."""
     shuffle(books)
     pool = Pool()
     generator = num_snippets_per_book(books, snippet_count)
-    return chain.from_iterable(pool.map(load_snippets, generator))
+    if multi_thread:
+        pool = Pool()
+        mapper = pool.map
+    else:
+        mapper = map
+    return chain.from_iterable(mapper(load_snippets, generator))
 
 
-def load_books(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='', verbose=False):
+def load_books(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
+               verbose=False, multi_thread=False):
     """For the given path create Path, Book and Snippet entries.
 
     Each entry is put into the databse via the given session. Each run of load_books should create"""
@@ -126,7 +133,8 @@ def load_books(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='', v
     session.commit()
 
     # Load snippets from given books and commit them.
-    session.add_all(load_snippets_from_books(books, snippet_count))
+    session.add_all(load_snippets_from_books(books, snippet_count,
+                    multi_thread))
     session.commit()
     return True
 
@@ -137,6 +145,7 @@ def authorate(arguments):
     create_db(engine)
     session = get_session(engine)
     verbose = arguments['--verbose']
+    multi_thread = not arguments['--one']
 
     # Assume successful return value
     ret = 0
@@ -151,7 +160,8 @@ def authorate(arguments):
             with open(arguments['<paths-file>'], 'r') as paths_file:
                 paths = paths_file.readlines()
                 for path in paths:
-                    if not load_books(session, path.rstrip(), prefix=prefix):
+                    if not load_books(session, path.rstrip(), prefix=prefix,
+                                      multi_thread=multi_thread):
                         ret = 3
         else:
             display_error("The given prefix does not exist: {path}".format(
