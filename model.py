@@ -6,7 +6,10 @@ from sqlalchemy.orm import relationship, backref, sessionmaker
 Base = declarative_base()
 
 
-class PrettyBase(object):
+class Model(object):
+    __mapper_args__ = {'always_refresh': True}
+    __table_args__ = {'sqlite_autoincrement': True}
+
     id = Column(Integer, primary_key=True)
 
     @declared_attr
@@ -15,15 +18,16 @@ class PrettyBase(object):
 
     @classmethod
     def _repr_helper(cls, **kwargs):
-        return ("<{cls}".format(cls=cls.__name__) +
-                " ".join([" {k}={v}".format(k=k, v=v) for k, v in kwargs]) +
-                ">")
+        return ("<{cls}".format(cls=cls.__name__) + " " +
+                " ".join(["{k}=\"{v}\"".format(k=k, v=v)
+                          for k, v in kwargs.items()])
+                + ">")
 
     def __repr__(self):
         return self.__class__._repr_helper(id=self.id)
 
 
-class Author(PrettyBase, Base):
+class Path(Model, Base):
     name = Column(String)
 
     def __init__(self, name):
@@ -33,7 +37,7 @@ class Author(PrettyBase, Base):
         return self.__class__._repr_helper(id=self.id, name=self.name)
 
 
-class Book(PrettyBase, Base):
+class Book(Model, Base):
     title = Column(String)
     author_id = Column(Integer, ForeignKey('author.id'))
     author = relationship('Author', backref=backref('book', order_by=id))
@@ -46,7 +50,7 @@ class Book(PrettyBase, Base):
                                            author=self.author_id)
 
 
-class Snippet(PrettyBase, Base):
+class Snippet(Model, Base):
     text = Column(String)
     position = Column(Integer)
     book_id = Column(Integer, ForeignKey('book.id'))
