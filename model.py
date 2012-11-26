@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import (AbstractConcreteBase, declarative_base,
                                         declared_attr)
-from sqlalchemy.orm import relationship, backref, sessionmaker
+from sqlalchemy.orm import relationship, sessionmaker
 
 Base = declarative_base()
 
@@ -56,7 +56,6 @@ class Snippet(Model, Base):
     text = Column(String)
     position = Column(Integer)
     book_id = Column(Integer, ForeignKey('book.id'))
-    book = relationship('Book', backref=backref('book', order_by=id))
 
     def __init__(self, text, position):
         self.text = text
