@@ -68,21 +68,34 @@ def filename_to_title(filename):
     return TITLE_REGEX.match(name).groups()[0]
 
 
+def guarded_readline(encoded_file):
+    """A wrapper around readline to catch UnicodeDecodeErrors without
+    breaking."""
+    try:
+        line = encoded_file.readline()
+    except UnicodeDecodeError as e:
+        line = ''
+        print("ERROR: Coult not decode line: \"{line}\"".format(
+            line=repr(line)))
+    finally:
+        return line
+
+
 def load_snippets_from_txt_file(txt_file, snippet_count, book_id):
     """Load snippet_count snippets from the given text file."""
     size = os.path.getsize(txt_file.name)
 
     snippets = set()
-    enc_file = EncodedFile(txt_file.file, 'utf-8')
+    enc_file = EncodedFile(txt_file.file, 'utf-8', errors='ignore')
     while len(snippets) < snippet_count:
         starting_byte = random.randint(size / 10, 9 * size / 10)
         # Ignore the first line read since the cursor my start in the middle.
         enc_file.seek(starting_byte)
-        enc_file.readline()
+        line = guarded_readline(enc_file)
 
         pos = enc_file.tell()
         for i in range(2):
-            line = enc_file.readline()
+            line = guarded_readline(enc_file)
             if len(line) >= MIN_SNIPPET_SIZE:
                 line = unicode(line, encoding='utf-8', errors='ignore')
                 if VERBOSE:
