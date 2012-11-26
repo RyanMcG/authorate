@@ -42,14 +42,18 @@ class Path(Model, Base):
 
 class Book(Model, Base):
     title = Column(String)
-    path_id = Column(Integer, ForeignKey('path.id'))
+    full_path = Column(String)
+    path_id = Column(Integer, ForeignKey('path.id'), nullable=False)
 
-    def __init__(self, title):
+    def __init__(self, title, full_path, path_id):
         self.title = title
+        self.full_path = full_path
+        self.path_id = path_id
 
     def __repr__(self):
         return self.__class__._repr_helper(id=self.id, title=self.title,
-                                           path=self.path_id)
+                                           full_path=self.path_id,
+                                           path_id=self.path_id)
 
 
 class Snippet(Model, Base):
