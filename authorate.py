@@ -17,6 +17,8 @@ Options:
 from docopt import docopt, printable_usage
 from sqlalchemy import create_engine
 from model import create_db, get_session, Path, Book, Snippet
+from multiprocessing.pool import Pool
+from itertools import chain
 import sys
 import os
 import re
@@ -61,30 +63,31 @@ def filename_to_title(filename):
     return TITLE_REGEX.match(name).groups()[0]
 
 
-def load_snippets(book, snippet_count):
+def load_snippets(book_path_and_snippet_count):
     """Load snippet count snippets from the given book."""
+    book_path, snippet_count = book_path_and_snippet_count
     return []
 
 
-def load_snippets_from_books(books, snippet_count):
-    """Return snippet_count snippets from the given books."""
-
-    # Order the books randomly
-    shuffle(books)
-
+def num_snippets_per_book(books, snippet_count):
     num_books = len(books)
     snippets_per_book = snippet_count / num_books
     extra_book_max_index = snippet_count % num_books
 
-    snippets = []
     for i, book in enumerate(books):
-        # Determine
+        # Determine the number of snippets load for this book.
         num_snippets = snippets_per_book
         if i < extra_book_max_index:
             num_snippets += 1
-        snippets.extend(load_snippets(book, num_snippets))
+        yield (book.full_path, num_snippets)
 
-    return snippets
+
+def load_snippets_from_books(books, snippet_count):
+    """Return snippet_count snippets from the given books."""
+    shuffle(books)
+    pool = Pool()
+    generator = num_snippets_per_book(books, snippet_count)
+    return chain.from_iterable(pool.map(load_snippets, generator))
 
 
 def load_books(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='', verbose=False):
