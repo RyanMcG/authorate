@@ -59,4 +59,7 @@ init_docs:
 	-git stash pop
 
 clean:
-	rm -rf __pycache__ *.pyc .ropeproject
+	rm -rf __pycache__ *.pyc .ropeproject docs/*
+
+rmdb:
+	rm -f *.db
