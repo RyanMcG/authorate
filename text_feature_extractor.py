@@ -8,31 +8,31 @@ class text_feature_extractor:
         self.count = len(tokens)
         self.uniq_count = len(set(tokens))
 
-    def _normalize_dist(self, fdist):
-    	dist = dict()
-    	for token_freq in fdist.iteritems():
-    		dist[token_freq[0]] = float(token_freq[1]) / fdist.N()
-    	return dist
+    def _frequency_dict(self, fdist):
+        dist = dict()
+        for token in fdist.iterkeys():
+            dist[token] = fdist.freq(token)
+        return dist
 
     def word_freq(self):
-    	fdist = FreqDist(word.lower() for word in self.tokens)
-    	return self._normalize_dist(fdist)
+        fdist = FreqDist(word.lower() for word in self.tokens)
+        return self._frequency_dict(fdist)
 
     def avg_word_length(self):
-    	return sum([len(word) for word in self.tokens]) / float(self.count)
+        return sum([len(word) for word in self.tokens]) / float(self.count)
 
     def max_word_length(self):
-    	return max([len(word) for word in self.tokens])
+        return max([len(word) for word in self.tokens])
 
     def unique_word_freq(self):
-    	return float(self.uniq_count) / self.count
+        return float(self.uniq_count) / self.count
 
 if __name__ == "__main__":
     text = """Call me Ishmael. Some years ago-never mind how long
-    		  precisely-having little or no money in my purse, and
-    		  nothing particular to interest me on shore, I thought
-    		  I would sail about a little and see the watery part
-    		  of the world."""
+              precisely-having little or no money in my purse, and
+              nothing particular to interest me on shore, I thought
+              I would sail about a little and see the watery part
+              of the world."""
     tokens = nltk.word_tokenize(text)
     extr = text_feature_extractor(tokens)
     print(extr.word_freq())
