@@ -36,6 +36,7 @@ BOOK_REGEX = re.compile('^.*\.(mobi|txt|epub)$')
 TITLE_REGEX = re.compile('^(.*) - .*$')
 
 DEFAULT_SNIPPETS_COUNT = 50
+MIN_SNIPPET_SIZE = 70
 
 
 def display_error(e):
@@ -148,8 +149,7 @@ def load_path(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
     session.commit()
 
     # Load snippets from given books and commit them.
-    session.add_all(load_books(books, snippet_count,
-                    multi_thread))
+    session.add_all(load_books(books, snippet_count, multi_thread))
     session.commit()
     return True
 
