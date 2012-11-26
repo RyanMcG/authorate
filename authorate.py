@@ -17,9 +17,17 @@ Options:
 from docopt import docopt, printable_usage
 from sqlalchemy import create_engine
 import sys
-version = "0.1.0-SNAPSHOT"
+import re
 
-usage_str = printable_usage(__doc__)
+VERSION = "0.1.0-SNAPSHOT"
+
+USAGE_TEXT = printable_usage(__doc__)
+
+# Regexes
+BOOK_REGEX = re.compile('^.*\.(mobi|txt|epub)$')
+TITLE_REGEX = re.compile('^(.*) - .*$')
+
+DEFAULT_SNIPPETS_COUNT = 50
 
 
 def display_error(e):
@@ -32,7 +40,7 @@ def display_error(e):
     Usage:
       ...
     """
-    print("ERROR: {error}\n\n{usage}".format(error=e, usage=usage_str))
+    print("ERROR: {error}\n\n{usage}".format(error=e, usage=USAGE_TEXT))
 
 
 def load_books(engine, author):
@@ -54,7 +62,7 @@ def authorate(arguments):
 def main():
     """Runs the script."""
     # Parse options based on docstring above. If it is the first usage then...
-    arguments = docopt(__doc__, argv=sys.argv[1:], version=version)
+    arguments = docopt(__doc__, argv=sys.argv[1:], version=VERSION)
     # continue by calling this function.
     authorate(arguments)
 
