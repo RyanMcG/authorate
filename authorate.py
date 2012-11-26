@@ -29,6 +29,7 @@ import subprocess
 import random
 
 VERSION = "0.1.0-SNAPSHOT"
+VERBOSE = False
 
 USAGE_TEXT = printable_usage(__doc__)
 
@@ -84,8 +85,11 @@ def load_snippets_from_txt_file(txt_file, snippet_count, book_id):
         for i in range(2):
             line = enc_file.readline()
             if len(line) >= MIN_SNIPPET_SIZE:
-                print(line)
-                snippets.add((unicode(line.strip(), encoding='utf-8'), pos, book_id))
+                line = unicode(line, encoding='utf-8')
+                if VERBOSE:
+                    print("{0} : {1}".format(txt_file.name, pos))
+                snippets.add((line.strip(), pos, book_id))
+                break
             pos = enc_file.tell()
 
     return snippets
@@ -126,6 +130,8 @@ def load_books(books, snippet_count, multi_thread=True):
     random.shuffle(books)
     generator = num_snippets_per_book(books, snippet_count)
     if multi_thread:
+        if VERBOSE:
+            print("Multithreading Enabled")
         pool = Pool()
         mapper = pool.map
     else:
@@ -135,11 +141,11 @@ def load_books(books, snippet_count, multi_thread=True):
 
 
 def load_path(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
-              verbose=False, multi_thread=False):
+              multi_thread=True):
     """For the given path create Path, Book and Snippet entries.
 
     Each entry is put into the databse via the given session. Each run of load_books should create"""
-    if verbose:
+    if VERBOSE:
         print("Loading path: {path}".format(path=path))
 
     # Create an instance of the given path in the database.
@@ -181,7 +187,8 @@ def authorate(arguments):
     engine = create_engine('sqlite:///' + arguments['--db'])
     create_db(engine)
     session = get_session(engine)
-    verbose = arguments['--verbose']
+    global VERBOSE
+    VERBOSE = arguments['--verbose']
     multi_thread = not arguments['--one']
 
     # Assume successful return value
