@@ -99,7 +99,7 @@ def num_snippets_per_book(books, snippet_count):
         yield (book.full_path, num_snippets)
 
 
-def load_snippets_from_books(books, snippet_count, multi_thread=True):
+def load_books(books, snippet_count, multi_thread=True):
     """Return snippet_count snippets from the given books."""
     shuffle(books)
     pool = Pool()
@@ -112,8 +112,8 @@ def load_snippets_from_books(books, snippet_count, multi_thread=True):
     return chain.from_iterable(mapper(load_snippets, generator))
 
 
-def load_books(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
-               verbose=False, multi_thread=False):
+def load_path(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
+              verbose=False, multi_thread=False):
     """For the given path create Path, Book and Snippet entries.
 
     Each entry is put into the databse via the given session. Each run of load_books should create"""
@@ -149,7 +149,7 @@ def load_books(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
     session.commit()
 
     # Load snippets from given books and commit them.
-    session.add_all(load_snippets_from_books(books, snippet_count,
+    session.add_all(load_books(books, snippet_count,
                     multi_thread))
     session.commit()
     return True
@@ -176,8 +176,8 @@ def authorate(arguments):
             with open(arguments['<paths-file>'], 'r') as paths_file:
                 paths = paths_file.readlines()
                 for path in paths:
-                    if not load_books(session, path.rstrip(), prefix=prefix,
-                                      multi_thread=multi_thread):
+                    if not load_path(session, path.rstrip(), prefix=prefix,
+                                     multi_thread=multi_thread):
                         ret = 3
         else:
             display_error("The given prefix does not exist: {path}".format(
