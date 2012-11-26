@@ -16,7 +16,7 @@ Options:
 """
 from docopt import docopt, printable_usage
 from sqlalchemy import create_engine
-from model import create_db, get_session, Path
+from model import create_db, get_session, Path, Book, Snippet
 import sys
 import os
 import re
@@ -60,6 +60,11 @@ def filename_to_title(filename):
     return TITLE_REGEX.match(name).groups()[0]
 
 
+def load_snippets(books, snippet_count):
+    """Return snippet_count snippets from the given books."""
+    return []
+
+
 def load_books(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='', verbose=False):
     """For the given path create Path, Book and Snippet entries.
 
@@ -72,14 +77,33 @@ def load_books(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='', v
     session.add(path_inst)
     session.commit()
 
-    book_paths = []
+    books = []
     full_path = os.path.join(prefix, path)
+    if not os.path.exists(full_path):
+        display_error("The given path does not exist: {path}".format(
+            path=full_path))
+        return False
+
     for root, dirs, files in os.walk(full_path):
-        books = filter(BOOK_REGEX.match, files)
-        if len(books) > 0:
-            book_name = books[0]
+        book_paths = filter(BOOK_REGEX.match, files)
+        if len(book_paths) > 0:
+            # Get the title and full path for the first book in this directory.
+            book_name = book_paths[0]
             title = filename_to_title(book_name)
-            book_paths.append(os.path.join(root, book_name))
+            full_book_path = os.path.join(root, book_name)
+
+            # Create an instance of the book and add it to the databse.
+            book_inst = Book(title, full_book_path, path_inst.id)
+            session.add(book_inst)
+            books.append(book_inst)
+
+    # Commit all of the books
+    session.commit()
+
+    # Load snippets from given books and commit them.
+    session.add_all(load_snippets(books, snippet_count))
+    session.commit()
+    return True
 
 
 def authorate(arguments):
@@ -89,20 +113,29 @@ def authorate(arguments):
     session = get_session(engine)
     verbose = arguments['--verbose']
 
+    # Assume successful return value
+    ret = 0
     if arguments['load']:
         prefix = arguments['--prefix']
+        if os.path.exists(prefix):
+            # Determine how many snippets to get per path.
+            snippets_count = arguments['<snippets-per-path>']
+            if not snippets_count:
+                snippets_count = DEFAULT_SNIPPETS_COUNT
 
-        # Determine how many snippets to get per path.
-        snippets_count = arguments['<snippets-per-path>']
-        if not snippets_count:
-            snippets_count = DEFAULT_SNIPPETS_COUNT
-
-        with open(arguments['<paths-file>'], 'r') as paths_file:
-            paths = paths_file.readlines()
-            for path in paths:
-                load_books(session, path.rstrip(), prefix=prefix)
+            with open(arguments['<paths-file>'], 'r') as paths_file:
+                paths = paths_file.readlines()
+                for path in paths:
+                    if not load_books(session, path.rstrip(), prefix=prefix):
+                        ret = 3
+        else:
+            display_error("The given prefix does not exist: {path}".format(
+                path=prefix))
+            ret = 2
     else:
         display_error("No subcommand given.")
+        ret = 1
+    return ret
 
 
 def main():
@@ -110,7 +143,7 @@ def main():
     # Parse options based on docstring above. If it is the first usage then...
     arguments = docopt(__doc__, argv=sys.argv[1:], version=VERSION)
     # continue by calling this function.
-    authorate(arguments)
+    return authorate(arguments)
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
