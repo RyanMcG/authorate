@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Get a bunch of snippets from a list of authors.
 
@@ -223,6 +222,3 @@ def main():
     arguments = docopt(__doc__, argv=sys.argv[1:], version=VERSION)
     # continue by calling this function.
     return authorate(arguments)
-
-if __name__ == '__main__':
-    sys.exit(main())
