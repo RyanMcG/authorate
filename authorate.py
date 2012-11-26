@@ -16,6 +16,7 @@ Options:
 """
 from docopt import docopt, printable_usage
 from sqlalchemy import create_engine
+from model import create_db, get_session, Path
 import sys
 import re
 
@@ -49,12 +50,23 @@ def load_books(engine, author):
 
 def authorate(arguments):
     """Main function which delegates to fabric tasks."""
-    engine = create_engine('sqlite:///:memory:', echo=True)
+    engine = create_engine('sqlite:///' + arguments['--db'])
+    create_db(engine)
+    session = get_session(engine)
+    verbose = arguments['--verbose']
+
     if arguments['load']:
-        with open(arguments['<authors-file>'], 'r') as authors_file:
-            authors = authors_file.readlines()
-            for author in authors:
-                load_books(engine, author)
+        prefix = arguments['--prefix']
+
+        # Determine how many snippets to get per path.
+        snippets_count = arguments['<snippets-per-path>']
+        if not snippets_count:
+            snippets_count = DEFAULT_SNIPPETS_COUNT
+
+        with open(arguments['<paths-file>'], 'r') as paths_file:
+            paths = paths_file.readlines()
+            for path in paths:
+                load_books(session, path.rstrip(), prefix=prefix)
     else:
         display_error("No subcommand given.")
 
