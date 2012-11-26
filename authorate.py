@@ -25,7 +25,7 @@ import sys
 import os
 import re
 import subprocess
-from random import shuffle
+import random
 
 VERSION = "0.1.0-SNAPSHOT"
 
@@ -101,8 +101,7 @@ def num_snippets_per_book(books, snippet_count):
 
 def load_books(books, snippet_count, multi_thread=True):
     """Return snippet_count snippets from the given books."""
-    shuffle(books)
-    pool = Pool()
+    random.shuffle(books)
     generator = num_snippets_per_book(books, snippet_count)
     if multi_thread:
         pool = Pool()
