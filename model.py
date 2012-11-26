@@ -42,15 +42,14 @@ class Path(Model, Base):
 
 class Book(Model, Base):
     title = Column(String)
-    author_id = Column(Integer, ForeignKey('author.id'))
-    author = relationship('Author', backref=backref('book', order_by=id))
+    path_id = Column(Integer, ForeignKey('path.id'))
 
     def __init__(self, title):
         self.title = title
 
     def __repr__(self):
         return self.__class__._repr_helper(id=self.id, title=self.title,
-                                           author=self.author_id)
+                                           path=self.path_id)
 
 
 class Snippet(Model, Base):
