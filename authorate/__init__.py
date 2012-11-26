@@ -17,6 +17,7 @@ Options:
 from docopt import docopt, printable_usage
 from sqlalchemy import create_engine
 from model import create_db, get_session, Path, Book, Snippet
+from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
 from itertools import chain
 from tempfile import NamedTemporaryFile
@@ -38,6 +39,9 @@ TITLE_REGEX = re.compile('^(.*) - .*$')
 
 DEFAULT_SNIPPETS_COUNT = 50
 MIN_SNIPPET_SIZE = 70
+
+
+engine = None
 
 
 def display_error(e):
@@ -107,9 +111,8 @@ def load_snippets_from_txt_file(txt_file, snippet_count, book_id):
     return snippets
 
 
-def load_snippets(book_metadata):
+def load_snippets(book_id, book_path, snippet_count):
     """Load snippet count snippets from the given book."""
-    book_id, book_path, snippet_count = book_metadata
     with NamedTemporaryFile(suffix='.txt') as txt_file:
         args_list = ['ebook-convert', book_path, txt_file.name]
         with open(os.devnull, 'w') as stdout:
@@ -138,21 +141,24 @@ def num_snippets_per_book(books, snippet_count):
         yield (book.id, book.full_path, num_snippets)
 
 
-def load_books(books, snippet_count, multi_thread=True):
+def snippet_callback(async_result):
+    session = get_session(engine)
+    session.add_all(Snippet(*snip) for snip in async_result.get())
+    session.commit()
+
+
+def load_books(pool, books, snippet_count, multi_thread=True):
     """Return snippet_count snippets from the given books."""
-    generator = num_snippets_per_book(books, snippet_count)
-    if multi_thread:
+    books.sort(key=lambda book: os.path.getsize(book.full_path), reverse=True)
+    import time
+    time.sleep(3)
+    for item in num_snippets_per_book(books, snippet_count):
+        pool.apply_async(load_snippets, item)
         if VERBOSE:
-            print("Multithreading Enabled")
-        pool = Pool()
-        mapper = pool.map
-    else:
-        mapper = map
-    return (Snippet(*snip_tupple) for snip_tupple in
-            chain.from_iterable(mapper(load_snippets, generator)))
+            print("\tBook enqueued: {book}".format(book=item[1]))
 
 
-def load_path(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
+def load_path(pool, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
               multi_thread=True):
     """For the given path create Path, Book and Snippet entries.
 
@@ -162,6 +168,7 @@ def load_path(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
 
     # Create an instance of the given path in the database.
     path_inst = Path(path, prefix)
+    session = get_session(engine)
     session.add(path_inst)
     session.commit()
 
@@ -189,16 +196,16 @@ def load_path(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
     session.commit()
 
     # Load snippets from given books and commit them.
-    session.add_all(load_books(books, snippet_count, multi_thread))
-    session.commit()
+    load_books(pool, books, snippet_count, multi_thread)
     return True
 
 
 def authorate(arguments):
     """Main function which delegates to fabric tasks."""
+    global engine
     engine = create_engine('sqlite:///' + arguments['--db'])
     create_db(engine)
-    session = get_session(engine)
+
     global VERBOSE
     VERBOSE = arguments['--verbose']
     multi_thread = not arguments['--one']
@@ -213,12 +220,16 @@ def authorate(arguments):
             if not snippets_count:
                 snippets_count = DEFAULT_SNIPPETS_COUNT
 
+            pool = Pool(cpu_count() if multi_thread else 1)
             with open(arguments['<paths-file>'], 'r') as paths_file:
                 paths = paths_file.readlines()
                 for path in paths:
-                    if not load_path(session, path.rstrip(), prefix=prefix,
-                                     multi_thread=multi_thread):
+                    res = load_path(pool, path.rstrip(), prefix=prefix, multi_thread=multi_thread)
+                    if not res:
                         ret = 3
+            # Join the pool
+            pool.close()
+            pool.join()
         else:
             display_error("The given prefix does not exist: {path}".format(
                 path=prefix))
