@@ -85,7 +85,7 @@ def load_snippets_from_txt_file(txt_file, snippet_count, book_id):
         for i in range(2):
             line = enc_file.readline()
             if len(line) >= MIN_SNIPPET_SIZE:
-                line = unicode(line, encoding='utf-8')
+                line = unicode(line, encoding='utf-8', errors='ignore')
                 if VERBOSE:
                     print("{0} : {1}".format(txt_file.name, pos))
                 snippets.add((line.strip(), pos, book_id))
