@@ -67,19 +67,20 @@ def filename_to_title(filename):
     return TITLE_REGEX.match(name).groups()[0]
 
 
-def load_snippets_from_txt_file(txt_file, snippet_count):
+def load_snippets_from_txt_file(txt_file, snippet_count, book_id):
     """Load snippet_count snippets from the given text file."""
     pass
 
-def load_snippets(book_path_and_snippet_count):
+def load_snippets(book_metadata):
     """Load snippet count snippets from the given book."""
-    book_path, snippet_count = book_path_and_snippet_count
+    book_id, book_path, snippet_count = book_metadata
     with NamedTemporaryFile(suffix='.txt') as txt_file:
         args_list = ['ebook-convert', book_path, txt_file.name]
         with open(os.devnull, 'w') as stdout:
             return_value = subprocess.call(args_list, stdout=stdout)
         if return_value == 0:
-            return load_snippets_from_txt_file(txt_file, snippet_count)
+            return load_snippets_from_txt_file(txt_file, snippet_count,
+                                               book_id)
         else:
             display_error("Failed to execute the following command: {cmd}".format(
                 cmd=" ".join(args_list)))
@@ -97,7 +98,7 @@ def num_snippets_per_book(books, snippet_count):
         num_snippets = snippets_per_book
         if i < extra_book_max_index:
             num_snippets += 1
-        yield (book.full_path, num_snippets)
+        yield (book.id, book.full_path, num_snippets)
 
 
 def load_books(books, snippet_count, multi_thread=True):
@@ -109,7 +110,8 @@ def load_books(books, snippet_count, multi_thread=True):
         mapper = pool.map
     else:
         mapper = map
-    return chain.from_iterable(mapper(load_snippets, generator))
+    return (Snippet(*snip_tupple) for snip_tupple in
+            chain.from_iterable(mapper(load_snippets, generator)))
 
 
 def load_path(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
