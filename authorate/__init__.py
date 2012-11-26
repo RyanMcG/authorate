@@ -128,7 +128,8 @@ def num_snippets_per_book(books, snippet_count):
     num_books = len(books)
     snippets_per_book = snippet_count / num_books
     extra_book_max_index = snippet_count % num_books
-
+    # Sort books by size descending so the largest book is converted first.
+    sort(books, key=lambda book: os.path.size(book.full_path), reverse=True)
     for i, book in enumerate(books):
         # Determine the number of snippets load for this book.
         num_snippets = snippets_per_book
@@ -139,7 +140,6 @@ def num_snippets_per_book(books, snippet_count):
 
 def load_books(books, snippet_count, multi_thread=True):
     """Return snippet_count snippets from the given books."""
-    random.shuffle(books)
     generator = num_snippets_per_book(books, snippet_count)
     if multi_thread:
         if VERBOSE:
