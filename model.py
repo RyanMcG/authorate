@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import (AbstractConcreteBase, declarative_base,
                                         declared_attr)
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, sessionmaker
 
 Base = declarative_base()
 
@@ -64,3 +64,8 @@ class Snippet(PrettyBase, Base):
 def create_db(engine):
     """Create the database and tables."""
     Base.metadata.create_all(engine)
+
+
+def get_session(engine):
+    Session = sessionmaker(bind=engine)
+    return Session()
