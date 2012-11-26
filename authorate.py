@@ -20,9 +20,11 @@ from sqlalchemy import create_engine
 from model import create_db, get_session, Path, Book, Snippet
 from multiprocessing.pool import Pool
 from itertools import chain
+from tempfile import NamedTemporaryFile
 import sys
 import os
 import re
+import subprocess
 from random import shuffle
 
 VERSION = "0.1.0-SNAPSHOT"
@@ -67,10 +69,21 @@ def filename_to_title(filename):
 def load_snippets(book_path_and_snippet_count):
     """Load snippet count snippets from the given book."""
     book_path, snippet_count = book_path_and_snippet_count
-    return []
+    with NamedTemporaryFile(suffix='.txt') as txt_file:
+        args_list = ['ebook-convert', book_path, txt_file.name]
+        snippets = []
+        with open(os.devnull, 'w') as stdout:
+            return_value = subprocess.call(args_list, stdout=stdout)
+        if return_value == 0:
+            pass
+        else:
+            display_error("Failed to execute the following command: {cmd}".format(
+                cmd=" ".join(args_list)))
+    return snippets
 
 
 def num_snippets_per_book(books, snippet_count):
+    """A generator that returns tupples of paths and the snippet counts."""
     num_books = len(books)
     snippets_per_book = snippet_count / num_books
     extra_book_max_index = snippet_count % num_books
