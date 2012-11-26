@@ -20,6 +20,7 @@ from model import create_db, get_session, Path, Book, Snippet
 import sys
 import os
 import re
+from random import shuffle
 
 VERSION = "0.1.0-SNAPSHOT"
 
@@ -60,9 +61,30 @@ def filename_to_title(filename):
     return TITLE_REGEX.match(name).groups()[0]
 
 
-def load_snippets(books, snippet_count):
-    """Return snippet_count snippets from the given books."""
+def load_snippets(book, snippet_count):
+    """Load snippet count snippets from the given book."""
     return []
+
+
+def load_snippets_from_books(books, snippet_count):
+    """Return snippet_count snippets from the given books."""
+
+    # Order the books randomly
+    shuffle(books)
+
+    num_books = len(books)
+    snippets_per_book = snippet_count / num_books
+    extra_book_max_index = snippet_count % num_books
+
+    snippets = []
+    for i, book in enumerate(books):
+        # Determine
+        num_snippets = snippets_per_book
+        if i < extra_book_max_index:
+            num_snippets += 1
+        snippets.extend(load_snippets(book, num_snippets))
+
+    return snippets
 
 
 def load_books(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='', verbose=False):
@@ -101,7 +123,7 @@ def load_books(session, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='', v
     session.commit()
 
     # Load snippets from given books and commit them.
-    session.add_all(load_snippets(books, snippet_count))
+    session.add_all(load_snippets_from_books(books, snippet_count))
     session.commit()
     return True
 
