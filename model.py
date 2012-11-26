@@ -29,12 +29,15 @@ class Model(object):
 
 class Path(Model, Base):
     name = Column(String)
+    prefix = Column(String)
 
-    def __init__(self, name):
+    def __init__(self, name, prefix=''):
         self.name = name
+        self.prefix = prefix
 
     def __repr__(self):
-        return self.__class__._repr_helper(id=self.id, name=self.name)
+        return self.__class__._repr_helper(id=self.id, prefix=self.prefix,
+                                           name=self.name)
 
 
 class Book(Model, Base):
