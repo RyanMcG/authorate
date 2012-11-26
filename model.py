@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, UnicodeText, ForeignKey
 from sqlalchemy.ext.declarative import (AbstractConcreteBase, declarative_base,
                                         declared_attr)
 from sqlalchemy.orm import relationship, sessionmaker
@@ -57,13 +57,14 @@ class Book(Model, Base):
 
 
 class Snippet(Model, Base):
-    text = Column(String)
+    text = Column(UnicodeText)
     position = Column(Integer)
     book_id = Column(Integer, ForeignKey('book.id'))
 
-    def __init__(self, text, position):
+    def __init__(self, text, position, book_id):
         self.text = text
         self.position = position
+        self.book_id = book_id
 
     def __repr__(self):
         return self.__class__._repr_helper(id=self.id, book=self.book_id,
