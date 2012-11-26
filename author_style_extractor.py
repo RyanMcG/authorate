@@ -16,6 +16,9 @@ class author_style_extractor:
     def word_freq(self):
         return self.fdist
 
+    def word_length_freq(self):
+        return FreqDist(len(word) for word in self.tokens)
+
     def avg_word_length(self):
         return sum([len(word) for word in self.tokens]) / float(self.fdist.N())
 
@@ -41,6 +44,7 @@ if __name__ == "__main__":
     extr.add_text(text1)
     extr.add_text(text2)
     print(extr.word_freq())
+    print(extr.word_length_freq())
     print(extr.avg_word_length())
     print(extr.std_dev_word_length())
     print(extr.max_word_length())
