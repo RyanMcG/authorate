@@ -18,6 +18,15 @@ class text_feature_extractor:
     	fdist = FreqDist(word.lower() for word in self.tokens)
     	return self._normalize_dist(fdist)
 
+    def avg_word_length(self):
+    	return sum([len(word) for word in self.tokens]) / float(self.count)
+
+    def max_word_length(self):
+    	return max([len(word) for word in self.tokens])
+
+    def unique_word_freq(self):
+    	return float(self.uniq_count) / self.count
+
 if __name__ == "__main__":
     text = """Call me Ishmael. Some years ago-never mind how long
     		  precisely-having little or no money in my purse, and
@@ -27,3 +36,6 @@ if __name__ == "__main__":
     tokens = nltk.word_tokenize(text)
     extr = text_feature_extractor(tokens)
     print(extr.word_freq())
+    print(extr.avg_word_length())
+    print(extr.max_word_length())
+    print(extr.unique_word_freq())
