@@ -21,6 +21,7 @@ from model import create_db, get_session, Path, Book, Snippet
 from multiprocessing.pool import Pool
 from itertools import chain
 from tempfile import NamedTemporaryFile
+from codecs import EncodedFile
 import sys
 import os
 import re
@@ -69,7 +70,26 @@ def filename_to_title(filename):
 
 def load_snippets_from_txt_file(txt_file, snippet_count, book_id):
     """Load snippet_count snippets from the given text file."""
-    pass
+    size = os.path.getsize(txt_file.name)
+
+    snippets = set()
+    enc_file = EncodedFile(txt_file.file, 'utf-8')
+    while len(snippets) < snippet_count:
+        starting_byte = random.randint(size / 10, 9 * size / 10)
+        # Ignore the first line read since the cursor my start in the middle.
+        enc_file.seek(starting_byte)
+        enc_file.readline()
+
+        pos = enc_file.tell()
+        for i in range(2):
+            line = enc_file.readline()
+            if len(line) >= MIN_SNIPPET_SIZE:
+                print(line)
+                snippets.add((unicode(line.strip(), encoding='utf-8'), pos, book_id))
+            pos = enc_file.tell()
+
+    return snippets
+
 
 def load_snippets(book_metadata):
     """Load snippet count snippets from the given book."""
