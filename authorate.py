@@ -3,14 +3,16 @@
 Get a bunch of snippets from a list of authors.
 
 Usage:
-  authorate load <authors-file> [<snippets-per-author>]
+  authorate load [-v -d <path-to-db> -p <path-prefix>] <paths-file> [<snippets-per-path>]
   authorate --help
   authorate --version
 
 Options:
-  -h --help     show this help message and exit
-  -v --verbose  print additional information
-  --version     print the version number
+  -p, --prefix <path-prefix>  a prefix to the paths given in the paths file.
+  -d, --db <path-to-db>       the sqlite database to use [default: snippets.db]
+  -h, --help                  show this help message and exit
+  -v, --verbose               print additional information
+  --version                   print the version number
 """
 from docopt import docopt, printable_usage
 from sqlalchemy import create_engine
