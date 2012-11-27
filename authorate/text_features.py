@@ -1,10 +1,12 @@
 import nltk
 from nltk.probability import FreqDist
 
+
 def text_to_vector(text):
     extr = TextFeatures()
     extr.add_text(text)
     return extr.to_vector()
+
 
 class TextFeatures:
 
@@ -25,7 +27,7 @@ class TextFeatures:
 
     def _word_length_freq_to_vector(self):
         dist = self.word_length_freq()
-        return [dist.freq(length) for length in range(1,12)]
+        return [dist.freq(length) for length in range(1, 12)]
 
     def _POS_freq_to_vector(self):
         dist = self.POS_freq()
@@ -40,16 +42,14 @@ class TextFeatures:
             self.fdist.inc(token.lower())
 
     def to_vector(self):
-        return [
-            self.avg_word_length(),
-            self.std_dev_word_length(),
-            float(self.max_word_length()),
-            self.unique_word_freq(),
-        ]                                       \
-        + self._word_freq_to_vector()           \
-        + self._punctuation_freq_vector()       \
-        + self._word_length_freq_to_vector()    \
-        + self._POS_freq_to_vector()
+        return ([self.avg_word_length(),
+                 self.std_dev_word_length(),
+                 float(self.max_word_length()),
+                 self.unique_word_freq()] +
+                self._word_freq_to_vector() +
+                self._punctuation_freq_vector() +
+                self._word_length_freq_to_vector() +
+                self._POS_freq_to_vector())
 
     def word_freq(self):
         return self.fdist
@@ -80,7 +80,7 @@ class TextFeatures:
         return float(self.fdist.B()) / self.fdist.N()
 
 if __name__ == "__main__":
-    text1 = """Call me Ishmael.""" 
+    text1 = """Call me Ishmael."""
     text2 = """Some years ago, never mind how long precisely,
                having little or no money in my purse, and nothing
                particular to interest me on shore, I thought I
