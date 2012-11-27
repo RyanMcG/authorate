@@ -15,7 +15,7 @@ docs:
 	$(ECHO) ${SEPARATOR}
 	$(ECHO) "Generating Documentation. . ."
 	$(ECHO) ${SEPARATOR}
-	pycco *.py
+	pycco authorate/*.py
 
 # Copy generated docs DOCS_BRANCH branch
 prepare_docs: docs
