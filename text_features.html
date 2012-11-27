@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>text_features.py</title>
+  <link rel="stylesheet" href="pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>text_features.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kn">import</span> <span class="nn">nltk</span>
+<span class="kn">from</span> <span class="nn">nltk.probability</span> <span class="kn">import</span> <span class="n">FreqDist</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">text_to_vector</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="n">extr</span> <span class="o">=</span> <span class="n">TextFeatures</span><span class="p">()</span>
+    <span class="n">extr</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">extr</span><span class="o">.</span><span class="n">to_vector</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">TextFeatures</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fdist</span> <span class="o">=</span> <span class="n">FreqDist</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">_word_freq_to_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">word_freq</span><span class="p">()</span>
+        <span class="n">most_common_words</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;the&quot;</span><span class="p">,</span> <span class="s">&quot;of&quot;</span><span class="p">,</span> <span class="s">&quot;to&quot;</span><span class="p">,</span> <span class="s">&quot;and&quot;</span><span class="p">,</span> <span class="s">&quot;a&quot;</span><span class="p">,</span>
+                             <span class="s">&quot;in&quot;</span><span class="p">,</span> <span class="s">&quot;is&quot;</span><span class="p">,</span> <span class="s">&quot;it&quot;</span><span class="p">,</span> <span class="s">&quot;you&quot;</span><span class="p">,</span> <span class="s">&quot;at&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">dist</span><span class="o">.</span><span class="n">freq</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">most_common_words</span><span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">_punctuation_freq_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">word_freq</span><span class="p">()</span>
+        <span class="n">punctuation</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;.&quot;</span><span class="p">,</span> <span class="s">&quot;,&quot;</span><span class="p">,</span> <span class="s">&quot;!&quot;</span><span class="p">,</span> <span class="s">&quot;?&quot;</span><span class="p">,</span> <span class="s">&quot;;&quot;</span><span class="p">,</span> <span class="s">&quot;:&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">dist</span><span class="o">.</span><span class="n">freq</span><span class="p">(</span><span class="n">mark</span><span class="p">)</span> <span class="k">for</span> <span class="n">mark</span> <span class="ow">in</span> <span class="n">punctuation</span><span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">_word_length_freq_to_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">word_length_freq</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">dist</span><span class="o">.</span><span class="n">freq</span><span class="p">(</span><span class="n">length</span><span class="p">)</span> <span class="k">for</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">12</span><span class="p">)]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">_POS_freq_to_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">POS_freq</span><span class="p">()</span>
+        <span class="n">parts_of_speech</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;NN&quot;</span><span class="p">,</span> <span class="s">&quot;NNS&quot;</span><span class="p">,</span> <span class="s">&quot;NNP&quot;</span><span class="p">,</span> <span class="s">&quot;NNPS&quot;</span><span class="p">,</span> <span class="s">&quot;DT&quot;</span><span class="p">,</span> <span class="s">&quot;RB&quot;</span><span class="p">,</span> <span class="s">&quot;IN&quot;</span><span class="p">,</span> <span class="s">&quot;PRP&quot;</span><span class="p">,</span>
+                           <span class="s">&quot;CC&quot;</span><span class="p">,</span> <span class="s">&quot;VB&quot;</span><span class="p">,</span> <span class="s">&quot;VBD&quot;</span><span class="p">,</span> <span class="s">&quot;VBN&quot;</span><span class="p">,</span> <span class="s">&quot;JJ&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">dist</span><span class="o">.</span><span class="n">freq</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">parts_of_speech</span><span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">add_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="n">tokens</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span> <span class="o">+=</span> <span class="n">tokens</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fdist</span><span class="o">.</span><span class="n">inc</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">to_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">avg_word_length</span><span class="p">(),</span>
+                 <span class="bp">self</span><span class="o">.</span><span class="n">std_dev_word_length</span><span class="p">(),</span>
+                 <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_word_length</span><span class="p">()),</span>
+                 <span class="bp">self</span><span class="o">.</span><span class="n">unique_word_freq</span><span class="p">()]</span> <span class="o">+</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_word_freq_to_vector</span><span class="p">()</span> <span class="o">+</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_punctuation_freq_vector</span><span class="p">()</span> <span class="o">+</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_word_length_freq_to_vector</span><span class="p">()</span> <span class="o">+</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_POS_freq_to_vector</span><span class="p">())</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">word_freq</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fdist</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">word_length_freq</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">FreqDist</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">POS_freq</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>nltk.download('maxent_treebank_pos_tagger')</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">tagged</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">pos_tag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">)</span>
+        <span class="n">pos_dist</span> <span class="o">=</span> <span class="n">FreqDist</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">pos_pair</span> <span class="ow">in</span> <span class="n">tagged</span><span class="p">:</span>
+            <span class="n">pos_dist</span><span class="o">.</span><span class="n">inc</span><span class="p">(</span><span class="n">pos_pair</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pos_dist</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">avg_word_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">])</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fdist</span><span class="o">.</span><span class="n">N</span><span class="p">())</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">std_dev_word_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">avg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">avg_word_length</span><span class="p">()</span>
+        <span class="n">sqr_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([(</span><span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">-</span> <span class="n">avg</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">sqr_sum</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fdist</span><span class="o">.</span><span class="n">N</span><span class="p">())</span> <span class="o">**</span> <span class="mf">0.5</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">max_word_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">])</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">unique_word_freq</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fdist</span><span class="o">.</span><span class="n">B</span><span class="p">())</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fdist</span><span class="o">.</span><span class="n">N</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">text1</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Call me Ishmael.&quot;&quot;&quot;</span>
+    <span class="n">text2</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Some years ago, never mind how long precisely,</span>
+<span class="s">               having little or no money in my purse, and nothing</span>
+<span class="s">               particular to interest me on shore, I thought I</span>
+<span class="s">               would sail about a little and see the watery part</span>
+<span class="s">               of the world.&quot;&quot;&quot;</span>
+    <span class="n">extr</span> <span class="o">=</span> <span class="n">TextFeatures</span><span class="p">()</span>
+    <span class="n">extr</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="n">text1</span><span class="p">)</span>
+    <span class="n">extr</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="n">text2</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">extr</span><span class="o">.</span><span class="n">to_vector</span><span class="p">())</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

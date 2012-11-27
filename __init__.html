@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>__init__.py</title>
+  <link rel="stylesheet" href="pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>__init__.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Get a bunch of snippets from a list of authors.</p>
+<p>Usage:
+  authorate load [-v --one -d <path-to-db> -p <path-prefix>] <paths-file> [<snippets-per-path>]
+  authorate process [-v -d <path-to-db> -C <classifiers-dir>]
+  authorate classify [-v -C <classifiers-dir>] ([-]|<snippet-file>)
+  authorate test [-v -d <path-to-db> -C <classifiers-dir>]
+  authorate --help
+  authorate --version</p>
+<p>Arguments:
+  <paths-file>                A file containing paths separated by newlines to
+                              load snippets from.</p>
+<p>Options:
+  -C <classifiers-dir>        the directory to store or read classifiers from
+  -p, --prefix <path-prefix>  a prefix to the paths given in the paths file.
+  -d, --db <path-to-db>       the sqlite database to use [default: snippets.db]
+  -h, --help                  show this help message and exit
+  -v, --verbose               print additional information
+  --version                   print the version number
+  --one                       Use only one thread.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kn">from</span> <span class="nn">docopt</span> <span class="kn">import</span> <span class="n">docopt</span><span class="p">,</span> <span class="n">printable_usage</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">create_engine</span>
+<span class="kn">from</span> <span class="nn">model</span> <span class="kn">import</span> <span class="n">create_db</span><span class="p">,</span> <span class="n">get_session</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">Book</span><span class="p">,</span> <span class="n">Snippet</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">cpu_count</span>
+<span class="kn">from</span> <span class="nn">authorate</span> <span class="kn">import</span> <span class="n">classify</span>
+<span class="kn">from</span> <span class="nn">multiprocessing.pool</span> <span class="kn">import</span> <span class="n">Pool</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
+<span class="kn">from</span> <span class="nn">codecs</span> <span class="kn">import</span> <span class="n">EncodedFile</span>
+<span class="kn">from</span> <span class="nn">authorate.text_features</span> <span class="kn">import</span> <span class="n">text_to_vector</span>
+<span class="kn">import</span> <span class="nn">fileinput</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="n">VERSION</span> <span class="o">=</span> <span class="s">&quot;0.1.0-SNAPSHOT&quot;</span>
+<span class="n">VERBOSE</span> <span class="o">=</span> <span class="bp">False</span>
+
+<span class="n">USAGE_TEXT</span> <span class="o">=</span> <span class="n">printable_usage</span><span class="p">(</span><span class="n">__doc__</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <p>Regexes</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="n">BOOK_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;^.*\.(mobi|txt|epub)$&#39;</span><span class="p">)</span>
+<span class="n">TITLE_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;^(.*) - .*$&#39;</span><span class="p">)</span>
+
+<span class="n">DEFAULT_SNIPPETS_COUNT</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">MIN_SNIPPET_SIZE</span> <span class="o">=</span> <span class="mi">70</span>
+
+
+<span class="n">engine</span> <span class="o">=</span> <span class="bp">None</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <p>Display the given message as an error to the user and print the usage</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">display_error</span><span class="p">(</span><span class="n">e</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      <p>string.</p>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>display_error("Oh no!") # doctest: +ELLIPSIS
+ERROR: Oh no!
+<BLANKLINE>
+Usage:
+  ...</p>
+</blockquote>
+</blockquote>
+</blockquote>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">print</span><span class="p">(</span><span class="s">&quot;ERROR: {error}</span><span class="se">\n\n</span><span class="s">{usage}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="n">e</span><span class="p">,</span> <span class="n">usage</span><span class="o">=</span><span class="n">USAGE_TEXT</span><span class="p">))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <p>For the given filename or path return the title of the book.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">filename_to_title</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      <p>Typically, a filename is something like "TITLE - AUTHOR.EXTENSION". This
+function assumes that pattern holds and extracts the TITLE portion.</p>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>filename_to_title('David Copperfield - Charles Dickens.txt')
+'David Copperfield'
+filename_to_title('Ugly - Title - Bad-Guy.mobi')
+'Ugly - Title'</p>
+</blockquote>
+</blockquote>
+</blockquote>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">TITLE_REGEX</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">groups</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      <p>A wrapper around readline to catch UnicodeDecodeErrors without</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">guarded_readline</span><span class="p">(</span><span class="n">encoded_file</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      <p>breaking."""
+try:
+    line = encoded_file.readline()
+except UnicodeDecodeError as e:
+    line = ''
+    print("ERROR: Coult not decode line: \"{line}\"".format(
+        line=repr(line)))
+finally:
+    return line</p>
+<p>load_snippets_from_txt_file(txt_file, snippet_count, book_id):
+Load snippet_count snippets from the given text file.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">size</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">txt_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="n">snippets</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">enc_file</span> <span class="o">=</span> <span class="n">EncodedFile</span><span class="p">(</span><span class="n">txt_file</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s">&#39;ignore&#39;</span><span class="p">)</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">snippets</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">snippet_count</span><span class="p">:</span>
+        <span class="n">starting_byte</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">size</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">9</span> <span class="o">*</span> <span class="n">size</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <p>Ignore the first line read since the cursor my start in the middle.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">enc_file</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">starting_byte</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">guarded_readline</span><span class="p">(</span><span class="n">enc_file</span><span class="p">)</span>
+
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">enc_file</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">guarded_readline</span><span class="p">(</span><span class="n">enc_file</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">MIN_SNIPPET_SIZE</span><span class="p">:</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s">&#39;ignore&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">VERBOSE</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">&quot;{0} : {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">txt_file</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">pos</span><span class="p">))</span>
+                <span class="n">snippets</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">pos</span><span class="p">,</span> <span class="n">book_id</span><span class="p">))</span>
+                <span class="k">break</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">enc_file</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">snippets</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>Load snippet count snippets from the given book.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">load_snippets</span><span class="p">(</span><span class="n">book_id</span><span class="p">,</span> <span class="n">book_path</span><span class="p">,</span> <span class="n">snippet_count</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">with</span> <span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s">&#39;.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">txt_file</span><span class="p">:</span>
+        <span class="n">args_list</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;ebook-convert&#39;</span><span class="p">,</span> <span class="n">book_path</span><span class="p">,</span> <span class="n">txt_file</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">devnull</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stdout</span><span class="p">:</span>
+            <span class="n">return_value</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">args_list</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">return_value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">load_snippets_from_txt_file</span><span class="p">(</span><span class="n">txt_file</span><span class="p">,</span> <span class="n">snippet_count</span><span class="p">,</span>
+                                               <span class="n">book_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">display_error</span><span class="p">(</span><span class="s">&quot;Failed to execute the following command: {cmd}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">cmd</span><span class="o">=</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args_list</span><span class="p">)))</span>
+            <span class="k">return</span> <span class="p">[]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      <p>A generator that returns tupples of paths and the snippet counts.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">num_snippets_per_book</span><span class="p">(</span><span class="n">books</span><span class="p">,</span> <span class="n">snippet_count</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">num_books</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">books</span><span class="p">)</span>
+    <span class="n">snippets_per_book</span> <span class="o">=</span> <span class="n">snippet_count</span> <span class="o">/</span> <span class="n">num_books</span>
+    <span class="n">extra_book_max_index</span> <span class="o">=</span> <span class="n">snippet_count</span> <span class="o">%</span> <span class="n">num_books</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Sort books by size descending so the largest book is converted first.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">books</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">book</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">book</span><span class="o">.</span><span class="n">full_path</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">book</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">books</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      <p>Determine the number of snippets load for this book.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">num_snippets</span> <span class="o">=</span> <span class="n">snippets_per_book</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">extra_book_max_index</span><span class="p">:</span>
+            <span class="n">num_snippets</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="n">book</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">book</span><span class="o">.</span><span class="n">full_path</span><span class="p">,</span> <span class="n">num_snippets</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">snippet_callback</span><span class="p">(</span><span class="n">snippets</span><span class="p">):</span>
+    <span class="n">session</span> <span class="o">=</span> <span class="n">get_session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add_all</span><span class="p">(</span><span class="n">Snippet</span><span class="p">(</span><span class="o">*</span><span class="n">snip</span><span class="p">)</span> <span class="k">for</span> <span class="n">snip</span> <span class="ow">in</span> <span class="n">snippets</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <p>Return snippet_count snippets from the given books.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">load_books</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="n">books</span><span class="p">,</span> <span class="n">snippet_count</span><span class="p">,</span> <span class="n">multi_thread</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">num_snippets_per_book</span><span class="p">(</span><span class="n">books</span><span class="p">,</span> <span class="n">snippet_count</span><span class="p">):</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">load_snippets</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">snippet_callback</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">VERBOSE</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">Book enqueued: {book}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">book</span><span class="o">=</span><span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-18'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-18'>#</a>
+      </div>
+      <p>For the given path create Path, Book and Snippet entries.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">load_path</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">snippet_count</span><span class="o">=</span><span class="n">DEFAULT_SNIPPETS_COUNT</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+              <span class="n">multi_thread</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-19'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-19'>#</a>
+      </div>
+      <p>Each entry is put into the databse via the given session. Each run of load_books should create"""
+if VERBOSE:
+    print("Loading path: {path}".format(path=path))</p>
+<h1>Create an instance of the given path in the database.</h1>
+<p>path_inst = Path(path, prefix)
+session = get_session(engine)
+session.add(path_inst)
+session.commit()</p>
+<p>books = []
+full_path = os.path.join(prefix, path)
+if not os.path.exists(full_path):
+    display_error("The given path does not exist: {path}".format(
+        path=full_path))
+    return False</p>
+<p>for root, dirs, files in os.walk(full_path):
+    book_paths = filter(BOOK_REGEX.match, files)
+    if len(book_paths) &gt; 0:
+        # Get the title and full path for the first book in this directory.
+        book_name = book_paths[0]
+        title = filename_to_title(book_name)
+        full_book_path = os.path.join(root, book_name)</p>
+<pre><code>    # Create an instance of the book and add it to the databse.
+    book_inst = Book(title, full_book_path, path_inst.id)
+    session.add(book_inst)
+    books.append(book_inst)
+</code></pre>
+<h1>Commit all of the books</h1>
+<p>session.commit()</p>
+<h1>Load snippets from given books and commit them.</h1>
+<p>load_books(pool, books, snippet_count, multi_thread)
+return True</p>
+<p>authorate(arguments):
+Main function which delegates to fabric tasks.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">global</span> <span class="n">engine</span>
+    <span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="s">&#39;sqlite:///&#39;</span> <span class="o">+</span> <span class="n">arguments</span><span class="p">[</span><span class="s">&#39;--db&#39;</span><span class="p">])</span>
+    <span class="n">create_db</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+
+    <span class="k">global</span> <span class="n">VERBOSE</span>
+    <span class="n">VERBOSE</span> <span class="o">=</span> <span class="n">arguments</span><span class="p">[</span><span class="s">&#39;--verbose&#39;</span><span class="p">]</span>
+    <span class="n">multi_thread</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">arguments</span><span class="p">[</span><span class="s">&#39;--one&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">arguments</span><span class="p">[</span><span class="s">&#39;-C&#39;</span><span class="p">]:</span>
+        <span class="n">classify</span><span class="o">.</span><span class="n">classifiers_dir</span> <span class="o">=</span> <span class="n">arguments</span><span class="p">[</span><span class="s">&#39;-C&#39;</span><span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-20'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-20'>#</a>
+      </div>
+      <p>Assume successful return value</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">ret</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">arguments</span><span class="p">[</span><span class="s">&#39;load&#39;</span><span class="p">]:</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">arguments</span><span class="p">[</span><span class="s">&#39;--prefix&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-21'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-21'>#</a>
+      </div>
+      <p>Determine how many snippets to get per path.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>            <span class="n">snippets_count</span> <span class="o">=</span> <span class="n">arguments</span><span class="p">[</span><span class="s">&#39;&lt;snippets-per-path&gt;&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">snippets_count</span><span class="p">:</span>
+                <span class="n">snippets_count</span> <span class="o">=</span> <span class="n">DEFAULT_SNIPPETS_COUNT</span>
+
+            <span class="n">pool</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="n">cpu_count</span><span class="p">()</span> <span class="k">if</span> <span class="n">multi_thread</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="s">&#39;&lt;paths-file&gt;&#39;</span><span class="p">],</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">paths_file</span><span class="p">:</span>
+                <span class="n">paths</span> <span class="o">=</span> <span class="n">paths_file</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="n">load_path</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="n">multi_thread</span><span class="o">=</span><span class="n">multi_thread</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">:</span>
+                        <span class="n">ret</span> <span class="o">=</span> <span class="mi">3</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-22'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-22'>#</a>
+      </div>
+      <p>Join the pool</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>            <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">display_error</span><span class="p">(</span><span class="s">&quot;The given prefix does not exist: {path}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">prefix</span><span class="p">))</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="k">elif</span> <span class="n">arguments</span><span class="p">[</span><span class="s">&#39;process&#39;</span><span class="p">]:</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">get_session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+        <span class="n">snippets</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Book</span><span class="p">,</span> <span class="n">Snippet</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Snippet</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">text_to_vector</span><span class="p">(</span><span class="n">snip</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">snip</span> <span class="ow">in</span> <span class="n">snippets</span><span class="p">]</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">book</span><span class="o">.</span><span class="n">path_id</span> <span class="k">for</span> <span class="n">book</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">snippets</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">Cls</span> <span class="ow">in</span> <span class="n">classify</span><span class="o">.</span><span class="n">classifier_types</span><span class="p">:</span>
+            <span class="n">classifier</span> <span class="o">=</span> <span class="n">Cls</span><span class="p">()</span>
+            <span class="n">classifier</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+            <span class="n">classify</span><span class="o">.</span><span class="n">save_classifier</span><span class="p">(</span><span class="n">classifier</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">arguments</span><span class="p">[</span><span class="s">&#39;classify&#39;</span><span class="p">]:</span>
+        <span class="n">snip_file</span> <span class="o">=</span> <span class="n">arguments</span><span class="p">[</span><span class="s">&#39;&lt;snippet-file&gt;&#39;</span><span class="p">]</span>
+        <span class="n">input_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">snip_file</span> <span class="k">if</span> <span class="n">snip_file</span> <span class="k">else</span> <span class="s">&#39;-&#39;</span><span class="p">]</span>
+        <span class="n">classify</span><span class="o">.</span><span class="n">classify_all</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span>
+                                                <span class="n">fileinput</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">input_files</span><span class="p">)]))</span>
+
+    <span class="k">elif</span> <span class="n">arguments</span><span class="p">[</span><span class="s">&#39;test&#39;</span><span class="p">]:</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">get_session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+        <span class="n">snippets</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Book</span><span class="p">,</span> <span class="n">Snippet</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Snippet</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">VERBOSE</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;Converting raw data to vectors. . .&quot;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">text_to_vector</span><span class="p">(</span><span class="n">snip</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">snip</span> <span class="ow">in</span> <span class="n">snippets</span><span class="p">]</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">book</span><span class="o">.</span><span class="n">path_id</span> <span class="k">for</span> <span class="n">book</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">snippets</span><span class="p">]</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">classify</span><span class="o">.</span><span class="n">test_all</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">display_error</span><span class="p">(</span><span class="s">&quot;No subcommand given.&quot;</span><span class="p">)</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">ret</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-23'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-23'>#</a>
+      </div>
+      <p>Runs the script.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-24'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-24'>#</a>
+      </div>
+      <p>Parse options based on docstring above. If it is the first usage then...</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">arguments</span> <span class="o">=</span> <span class="n">docopt</span><span class="p">(</span><span class="n">__doc__</span><span class="p">,</span> <span class="n">argv</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">version</span><span class="o">=</span><span class="n">VERSION</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-25'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-25'>#</a>
+      </div>
+      <p>continue by calling this function.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="n">authorate</span><span class="p">(</span><span class="n">arguments</span><span class="p">)</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

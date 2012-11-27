@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>classify.py</title>
+  <link rel="stylesheet" href="pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>classify.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">sklearn.externals</span> <span class="kn">import</span> <span class="n">joblib</span>
+<span class="kn">from</span> <span class="nn">sklearn.naive_bayes</span> <span class="kn">import</span> <span class="n">GaussianNB</span>
+<span class="kn">from</span> <span class="nn">sklearn.svm</span> <span class="kn">import</span> <span class="n">SVC</span>
+<span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">cross_validation</span>
+<span class="kn">from</span> <span class="nn">authorate.model</span> <span class="kn">import</span> <span class="n">get_session</span><span class="p">,</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">authorate.text_features</span> <span class="kn">import</span> <span class="n">text_to_vector</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.exc</span> <span class="kn">import</span> <span class="n">InterfaceError</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">textwrap</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="n">classifiers_dir</span> <span class="o">=</span> <span class="s">&#39;classifiers&#39;</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">classifer_path</span><span class="p">(</span><span class="n">cls_type</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">classifiers_dir</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">classifiers_dir</span><span class="p">,</span> <span class="n">cls_type</span><span class="o">.</span><span class="n">__name__</span> <span class="o">+</span> <span class="s">&#39;.pkl&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">create_classifier_dir</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">classifiers_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">classifiers_dir</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">save_classifier</span><span class="p">(</span><span class="n">classifier</span><span class="p">):</span>
+    <span class="n">create_classifier_dir</span><span class="p">()</span>
+    <span class="n">joblib</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">classifier</span><span class="p">,</span> <span class="n">classifer_path</span><span class="p">(</span><span class="n">classifier</span><span class="o">.</span><span class="n">__class__</span><span class="p">))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">load_classifier</span><span class="p">(</span><span class="n">ClsType</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">joblib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">classifer_path</span><span class="p">(</span><span class="n">ClsType</span><span class="p">))</span>
+
+
+<span class="n">classifier_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">SVC</span><span class="p">,</span> <span class="n">GaussianNB</span><span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">classify_all</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">snippet</span><span class="p">):</span>
+    <span class="n">session</span> <span class="o">=</span> <span class="n">get_session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+
+    <span class="n">indent</span> <span class="o">=</span> <span class="s">&#39;&gt;   &#39;</span>
+    <span class="n">formated_snippet</span> <span class="o">=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">snippet</span><span class="p">,</span> <span class="n">initial_indent</span><span class="o">=</span><span class="n">indent</span><span class="p">,</span>
+                                     <span class="n">subsequent_indent</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;Classifying snippet: </span><span class="se">\n\n</span><span class="s">{snippet}</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">snippet</span><span class="o">=</span><span class="n">formated_snippet</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">ClsType</span> <span class="ow">in</span> <span class="n">classifier_types</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s">&quot;ignore&quot;</span><span class="p">)</span>
+            <span class="n">classifier</span> <span class="o">=</span> <span class="n">load_classifier</span><span class="p">(</span><span class="n">ClsType</span><span class="p">)</span>
+
+        <span class="n">prediction</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">predict</span><span class="p">([</span><span class="n">text_to_vector</span><span class="p">(</span><span class="n">snippet</span><span class="p">)])</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Path</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">prediction</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="n">answer</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">except</span> <span class="n">InterfaceError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Classifier: {classifier}</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">classifier</span><span class="o">=</span><span class="n">classifier</span><span class="p">))</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;--&gt; Answer: {answer}</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">answer</span><span class="o">=</span><span class="n">answer</span><span class="p">))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">test_all</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">targets</span><span class="p">):</span>
+    <span class="n">best_avg</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">winner</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">for</span> <span class="n">ClsType</span> <span class="ow">in</span> <span class="n">classifier_types</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s">&quot;ignore&quot;</span><span class="p">)</span>
+            <span class="n">classifier</span> <span class="o">=</span> <span class="n">load_classifier</span><span class="p">(</span><span class="n">ClsType</span><span class="p">)</span>
+
+        <span class="n">shuffle_iter</span> <span class="o">=</span> <span class="n">cross_validation</span><span class="o">.</span><span class="n">ShuffleSplit</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span>
+                                                     <span class="n">n_iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                                                     <span class="n">test_size</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+        <span class="n">cv_result</span> <span class="o">=</span> <span class="n">cross_validation</span><span class="o">.</span><span class="n">cross_val_score</span><span class="p">(</span><span class="n">classifier</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span>
+                                                     <span class="n">cv</span><span class="o">=</span><span class="n">shuffle_iter</span><span class="p">)</span>
+        <span class="n">avg</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">cv_result</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">avg</span> <span class="o">&gt;=</span> <span class="n">best_avg</span><span class="p">:</span>
+            <span class="n">best_avg</span> <span class="o">=</span> <span class="n">avg</span>
+            <span class="n">winner</span> <span class="o">=</span> <span class="n">classifier</span>
+
+        <span class="n">answer</span> <span class="o">=</span> <span class="s">&quot;average={0} std={1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">cv_result</span><span class="p">),</span>
+                                              <span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">cv_result</span><span class="p">))</span>
+
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Classifier: {classifier}</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">classifier</span><span class="o">=</span><span class="n">classifier</span><span class="p">))</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;==&gt; CV Result: {answer}</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">answer</span><span class="o">=</span><span class="n">answer</span><span class="p">))</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;*** The best classifier is {classifier} ***&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">classifier</span><span class="o">=</span><span class="n">winner</span><span class="p">))</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>
