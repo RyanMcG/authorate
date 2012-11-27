@@ -1,31 +1,12 @@
 import os
 from sklearn.externals import joblib
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVM
 from authorate.model import get_session, Path
+from authorate.text_features import text_to_vector
 import textwrap
 
 
-class Classifier(object):
-    def classify(self, snippet):
-        """Return the author_id of the author that writes most like the given
-        snippet."""
-        return 1
-
-    def save(self, filename):
-        joblib.dump(self, filename)
-
-    @classmethod
-    def load(cls, filepath):
-        return joblib.load(filepath)
-
-    def __str__(self):
-        return "<({cls_name})>".format(cls_name=self.__class__.__name__)
-
-
-class NaiveBayes(Classifier):
-    def classify(self, snippet):
-        return 1
-
-classifier_types = [NaiveBayes]
 CLASSIFIERS_DIR = 'classifiers'
 
 
@@ -38,14 +19,24 @@ def create_classifier_dir():
         os.mkdir(CLASSIFIERS_DIR)
 
 
+def save_classifier(classifier):
+    joblib.dump(classifier, classifer_path(classifier.__class__))
+
+
+def load_classifier(ClsType):
+    return joblib.load(classifer_path(ClsType))
+
+
+classifier_types = [SVM, GaussianNB]
+
+
 def classify_all(engine, snippet):
     session = get_session(engine)
     formated_snippet = textwrap.fill(snippet, initial_indent=">   ")
     print("Classifying snippet: \n\n{snippet}\n".format(
         snippet=formated_snippet))
-    for classifier_type in classifier_types:
-        #classifier = classifier_type.load(classifier_path(cls_type))
-        #author_id = classifier.classify(snippet)
-        classifier = NaiveBayes()
+    for ClsType in classifier_types:
+        prediction = load_classifier(ClsType).predict([text_to_vector(snippet)])
+        print(prediction[0])
         print("Classifier: {classifier}".format(classifier=classifier))
         print("    Answer: {author}\n".format(author="Derp"))
