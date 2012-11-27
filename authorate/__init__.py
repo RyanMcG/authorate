@@ -4,7 +4,8 @@ Get a bunch of snippets from a list of authors.
 Usage:
   authorate load [-v --one -d <path-to-db> -p <path-prefix>] <paths-file> [<snippets-per-path>]
   authorate process [-v -d <path-to-db>]
-  authorate classify ([-]|<snippet-file>)
+  authorate classify [-v] ([-]|<snippet-file>)
+  authorate test [-v]
   authorate --help
   authorate --version
 
@@ -28,6 +29,7 @@ from multiprocessing.pool import Pool
 from itertools import chain
 from tempfile import NamedTemporaryFile
 from codecs import EncodedFile
+from authorate.text_features import text_to_vector
 import fileinput
 import sys
 import os
@@ -240,11 +242,9 @@ def authorate(arguments):
             ret = 2
 
     elif arguments['process']:
-        from authorate.text_features import text_to_vector
         from authorate.classify import classifier_types, save_classifier
         session = get_session(engine)
         snippets = session.query(Book, Snippet).join(Snippet).all()
-
         data = [text_to_vector(snip.text) for _, snip in snippets]
         targets = [book.path_id for book, _ in snippets]
         for Cls in classifier_types:
@@ -254,11 +254,22 @@ def authorate(arguments):
 
     elif arguments['classify']:
         from authorate.classify import classify_all
-
         snip_file = arguments['<snippet-file>']
         input_files = [snip_file if snip_file else '-']
         classify_all(engine, " ".join([line.rstrip() for line in
                                        fileinput.input(input_files)]))
+
+    elif arguments['test']:
+        from authorate.classify import test_all
+        session = get_session(engine)
+        snippets = session.query(Book, Snippet).join(Snippet).all()
+        if VERBOSE:
+            print("Converting raw data to vectors. . .")
+        data = [text_to_vector(snip.text) for _, snip in snippets]
+        targets = [book.path_id for book, _ in snippets]
+        print('')
+        test_all(engine, data, targets)
+
     else:
         display_error("No subcommand given.")
         ret = 1
