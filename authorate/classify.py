@@ -60,6 +60,8 @@ def classify_all(engine, snippet):
 
 
 def test_all(engine, data, targets):
+    best_avg = 0.0
+    winner = None
     for ClsType in classifier_types:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -70,8 +72,16 @@ def test_all(engine, data, targets):
                                                      test_size=0.4)
         cv_result = cross_validation.cross_val_score(classifier, data, targets,
                                                      cv=shuffle_iter)
+        avg = numpy.average(cv_result)
+
+        if avg >= best_avg:
+            best_avg = avg
+            winner = classifier
+
         answer = "average={0} std={1}".format(numpy.average(cv_result),
                                               numpy.std(cv_result))
 
         print("Classifier: {classifier}\n".format(classifier=classifier))
         print("==> CV Result: {answer}\n".format(answer=answer))
+
+    print("*** The best classifier is {classifier} ***".format(classifier=winner))
