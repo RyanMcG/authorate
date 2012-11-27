@@ -42,8 +42,8 @@ class TextFeatures:
     def to_vector(self):
         return [
             self.avg_word_length(),
-            float(self.std_dev_word_length()),
-            self.max_word_length(),
+            self.std_dev_word_length(),
+            float(self.max_word_length()),
             self.unique_word_freq(),
         ]                                       \
         + self._word_freq_to_vector()           \
