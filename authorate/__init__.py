@@ -3,8 +3,14 @@ Get a bunch of snippets from a list of authors.
 
 Usage:
   authorate load [-v --one -d <path-to-db> -p <path-prefix>] <paths-file> [<snippets-per-path>]
+  authorate process [-v -d <path-to-db>]
+  authorate classify
   authorate --help
   authorate --version
+
+Arguments:
+  <paths-file>                A file containing paths separated by newlines to
+                              load snippets from.
 
 Options:
   -p, --prefix <path-prefix>  a prefix to the paths given in the paths file.
