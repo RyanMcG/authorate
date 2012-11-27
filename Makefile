@@ -1,4 +1,4 @@
-DOCS_BRANCH=docs
+DOCS_BRANCH=gh-pages
 SEPARATOR="=========================================================="
 ECHO=@/usr/bin/env echo -e
 
