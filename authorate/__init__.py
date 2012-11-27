@@ -3,8 +3,14 @@ Get a bunch of snippets from a list of authors.
 
 Usage:
   authorate load [-v --one -d <path-to-db> -p <path-prefix>] <paths-file> [<snippets-per-path>]
+  authorate process [-v -d <path-to-db>]
+  authorate classify ([-]|<snippet-file>)
   authorate --help
   authorate --version
+
+Arguments:
+  <paths-file>                A file containing paths separated by newlines to
+                              load snippets from.
 
 Options:
   -p, --prefix <path-prefix>  a prefix to the paths given in the paths file.
@@ -22,6 +28,7 @@ from multiprocessing.pool import Pool
 from itertools import chain
 from tempfile import NamedTemporaryFile
 from codecs import EncodedFile
+import fileinput
 import sys
 import os
 import re
@@ -132,7 +139,7 @@ def num_snippets_per_book(books, snippet_count):
     snippets_per_book = snippet_count / num_books
     extra_book_max_index = snippet_count % num_books
     # Sort books by size descending so the largest book is converted first.
-    sort(books, key=lambda book: os.path.size(book.full_path), reverse=True)
+    books.sort(key=lambda book: os.path.getsize(book.full_path), reverse=True)
     for i, book in enumerate(books):
         # Determine the number of snippets load for this book.
         num_snippets = snippets_per_book
@@ -141,19 +148,16 @@ def num_snippets_per_book(books, snippet_count):
         yield (book.id, book.full_path, num_snippets)
 
 
-def snippet_callback(async_result):
+def snippet_callback(snippets):
     session = get_session(engine)
-    session.add_all(Snippet(*snip) for snip in async_result.get())
+    session.add_all(Snippet(*snip) for snip in snippets)
     session.commit()
 
 
 def load_books(pool, books, snippet_count, multi_thread=True):
     """Return snippet_count snippets from the given books."""
-    books.sort(key=lambda book: os.path.getsize(book.full_path), reverse=True)
-    import time
-    time.sleep(3)
     for item in num_snippets_per_book(books, snippet_count):
-        pool.apply_async(load_snippets, item)
+        pool.apply_async(load_snippets, item, callback=snippet_callback)
         if VERBOSE:
             print("\tBook enqueued: {book}".format(book=item[1]))
 
@@ -234,6 +238,27 @@ def authorate(arguments):
             display_error("The given prefix does not exist: {path}".format(
                 path=prefix))
             ret = 2
+
+    elif arguments['process']:
+        from authorate.text_features import text_to_vector
+        from authorate.classify import classifier_types, save_classifier
+        session = get_session(engine)
+        snippets = session.query(Book, Snippet).join(Snippet).all()
+
+        data = [text_to_vector(snip.text) for _, snip in snippets]
+        targets = [book.path_id for book, _ in snippets]
+        for Cls in classifier_types:
+            classifier = Cls()
+            classifier.fit(data, targets)
+            save_classifier(classifier)
+
+    elif arguments['classify']:
+        from authorate.classify import classify_all
+
+        snip_file = arguments['<snippet-file>']
+        input_files = [snip_file if snip_file else '-']
+        classify_all(engine, " ".join([line.rstrip() for line in
+                                       fileinput.input(input_files)]))
     else:
         display_error("No subcommand given.")
         ret = 1

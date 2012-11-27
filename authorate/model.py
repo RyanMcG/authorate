@@ -7,7 +7,6 @@ Base = declarative_base()
 
 
 class Model(object):
-    __mapper_args__ = {'always_refresh': True}
     __table_args__ = {'sqlite_autoincrement': True}
 
     id = Column(Integer, primary_key=True)

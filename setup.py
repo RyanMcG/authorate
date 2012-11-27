@@ -9,6 +9,10 @@ with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as \
         requirements_file:
     requirements = [line.rstrip() for line in requirements_file]
 
+# Download nltk
+import nltk
+nltk.download('maxent_treebank_pos_tagger')
+
 name = 'authorate'
 
 setup(name=name,
