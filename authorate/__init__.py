@@ -4,7 +4,7 @@ Get a bunch of snippets from a list of authors.
 Usage:
   authorate load [-v --one -d <path-to-db> -p <path-prefix>] <paths-file> [<snippets-per-path>]
   authorate process [-v -d <path-to-db>]
-  authorate classify
+  authorate classify ([-]|<snippet-file>)
   authorate --help
   authorate --version
 
@@ -28,6 +28,7 @@ from multiprocessing.pool import Pool
 from itertools import chain
 from tempfile import NamedTemporaryFile
 from codecs import EncodedFile
+import fileinput
 import sys
 import os
 import re
@@ -240,6 +241,17 @@ def authorate(arguments):
             display_error("The given prefix does not exist: {path}".format(
                 path=prefix))
             ret = 2
+    elif arguments['process']:
+        #from process import process
+        #process()
+        pass
+    elif arguments['classify']:
+        from authorate.classify import classify_all
+
+        snip_file = arguments['<snippet-file>']
+        input_files = [snip_file if snip_file else '-']
+        classify_all(engine, " ".join([line.rstrip() for line in
+                                       fileinput.input(input_files)]))
     else:
         display_error("No subcommand given.")
         ret = 1
