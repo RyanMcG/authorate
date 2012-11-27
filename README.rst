@@ -15,14 +15,24 @@ what famous author you write like the most.
 Setup
 =====
 
+Firstly, you'll need to install some system level dependencies
+
+**Arch Linux**
+::
+    sudo pacman -S gfortran gcc liblapack3 liblapack-dev libblas3 libblas-dev
+
+**Ubuntu**
+::
+    sudo apt-get install python-numpy python-scipy
+
 To install authorate from source: ::
 
     git clone git://github.com/RyanMcG/authorate.git
     cd authorate
     python setup.py install
 
-If you want to run authorate from source you need to manually get the
-dependencies first. ::
+If you want to use authorate directly without installing it be sure to install
+the python dependencies first. ::
 
     # Assuming you are already in the authorate directory
     pip install -r requirements.txt
