@@ -1,7 +1,7 @@
 import nltk
 from nltk.probability import FreqDist
 
-class author_style_extractor:
+class TextFeatures:
 
     def __init__(self):
         self.tokens = []
@@ -13,11 +13,22 @@ class author_style_extractor:
         for token in tokens:
             self.fdist.inc(token.lower())
 
+    def to_vector(self):
+        return []
+
     def word_freq(self):
         return self.fdist
 
     def word_length_freq(self):
         return FreqDist(len(word) for word in self.tokens)
+
+    def POS_freq(self):
+        #nltk.download('maxent_treebank_pos_tagger')
+        tagged = nltk.pos_tag(self.tokens)
+        pos_dist = FreqDist()
+        for pos_pair in tagged:
+            pos_dist.inc(pos_pair[1])
+        return pos_dist
 
     def avg_word_length(self):
         return sum([len(word) for word in self.tokens]) / float(self.fdist.N())
@@ -40,11 +51,12 @@ if __name__ == "__main__":
                particular to interest me on shore, I thought I
                would sail about a little and see the watery part
                of the world."""
-    extr = author_style_extractor()
+    extr = TextFeatures()
     extr.add_text(text1)
     extr.add_text(text2)
     print(extr.word_freq())
     print(extr.word_length_freq())
+    print(extr.POS_freq())
     print(extr.avg_word_length())
     print(extr.std_dev_word_length())
     print(extr.max_word_length())
