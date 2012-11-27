@@ -3,9 +3,9 @@ Get a bunch of snippets from a list of authors.
 
 Usage:
   authorate load [-v --one -d <path-to-db> -p <path-prefix>] <paths-file> [<snippets-per-path>]
-  authorate process [-v -d <path-to-db>]
-  authorate classify [-v] ([-]|<snippet-file>)
-  authorate test [-v]
+  authorate process [-v -d <path-to-db> -C <classifiers-dir>]
+  authorate classify [-v -C <classifiers-dir>] ([-]|<snippet-file>)
+  authorate test [-v -d <path-to-db> -C <classifiers-dir>]
   authorate --help
   authorate --version
 
@@ -14,6 +14,7 @@ Arguments:
                               load snippets from.
 
 Options:
+  -C <classifiers-dir>        the directory to store or read classifiers from
   -p, --prefix <path-prefix>  a prefix to the paths given in the paths file.
   -d, --db <path-to-db>       the sqlite database to use [default: snippets.db]
   -h, --help                  show this help message and exit
@@ -25,6 +26,7 @@ from docopt import docopt, printable_usage
 from sqlalchemy import create_engine
 from model import create_db, get_session, Path, Book, Snippet
 from multiprocessing import cpu_count
+from authorate import classify
 from multiprocessing.pool import Pool
 from itertools import chain
 from tempfile import NamedTemporaryFile
@@ -216,6 +218,9 @@ def authorate(arguments):
     VERBOSE = arguments['--verbose']
     multi_thread = not arguments['--one']
 
+    if arguments['-C']:
+        classify.classifiers_dir = arguments['-C']
+
     # Assume successful return value
     ret = 0
     if arguments['load']:
@@ -242,25 +247,22 @@ def authorate(arguments):
             ret = 2
 
     elif arguments['process']:
-        from authorate.classify import classifier_types, save_classifier
         session = get_session(engine)
         snippets = session.query(Book, Snippet).join(Snippet).all()
         data = [text_to_vector(snip.text) for _, snip in snippets]
         targets = [book.path_id for book, _ in snippets]
-        for Cls in classifier_types:
+        for Cls in classify.classifier_types:
             classifier = Cls()
             classifier.fit(data, targets)
-            save_classifier(classifier)
+            classify.save_classifier(classifier)
 
     elif arguments['classify']:
-        from authorate.classify import classify_all
         snip_file = arguments['<snippet-file>']
         input_files = [snip_file if snip_file else '-']
-        classify_all(engine, " ".join([line.rstrip() for line in
-                                       fileinput.input(input_files)]))
+        classify.classify_all(engine, " ".join([line.rstrip() for line in
+                                                fileinput.input(input_files)]))
 
     elif arguments['test']:
-        from authorate.classify import test_all
         session = get_session(engine)
         snippets = session.query(Book, Snippet).join(Snippet).all()
         if VERBOSE:
@@ -268,7 +270,7 @@ def authorate(arguments):
         data = [text_to_vector(snip.text) for _, snip in snippets]
         targets = [book.path_id for book, _ in snippets]
         print('')
-        test_all(engine, data, targets)
+        classify.test_all(engine, data, targets)
 
     else:
         display_error("No subcommand given.")

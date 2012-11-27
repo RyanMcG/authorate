@@ -10,16 +10,17 @@ import numpy
 import textwrap
 import warnings
 
-CLASSIFIERS_DIR = 'classifiers'
+classifiers_dir = 'classifiers'
 
 
 def classifer_path(cls_type):
-    return os.path.join(CLASSIFIERS_DIR, cls_type.__name__ + '.pkl')
+    print(classifiers_dir)
+    return os.path.join(classifiers_dir, cls_type.__name__ + '.pkl')
 
 
 def create_classifier_dir():
-    if not os.path.exists(CLASSIFIERS_DIR):
-        os.mkdir(CLASSIFIERS_DIR)
+    if not os.path.exists(classifiers_dir):
+        os.mkdir(classifiers_dir)
 
 
 def save_classifier(classifier):
