@@ -2,9 +2,11 @@ import os
 from sklearn.externals import joblib
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
+from sklearn import cross_validation
 from authorate.model import get_session, Path
 from authorate.text_features import text_to_vector
 from sqlalchemy.exc import InterfaceError
+import numpy
 import textwrap
 import warnings
 
@@ -55,3 +57,21 @@ def classify_all(engine, snippet):
 
         print("Classifier: {classifier}\n".format(classifier=classifier))
         print("--> Answer: {answer}\n".format(answer=answer))
+
+
+def test_all(engine, data, targets):
+    for ClsType in classifier_types:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            classifier = load_classifier(ClsType)
+
+        shuffle_iter = cross_validation.ShuffleSplit(len(data),
+                                                     n_iterations=10,
+                                                     test_size=0.4)
+        cv_result = cross_validation.cross_val_score(classifier, data, targets,
+                                                     cv=shuffle_iter)
+        answer = "average={0} std={1}".format(numpy.average(cv_result),
+                                              numpy.std(cv_result))
+
+        print("Classifier: {classifier}\n".format(classifier=classifier))
+        print("==> CV Result: {answer}\n".format(answer=answer))
