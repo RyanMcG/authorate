@@ -38,6 +38,7 @@ import os
 import re
 import subprocess
 import random
+import warnings
 
 VERSION = "0.1.0-SNAPSHOT"
 VERBOSE = False
@@ -268,8 +269,10 @@ def authorate(arguments):
 
         # Train the classifiers
         for (Cls, kwargs) in classify.classifier_types:
-            classifier = Cls(**kwargs)
-            classifier.fit(scaled_data, targets)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                classifier = Cls(**kwargs)
+                classifier.fit(scaled_data, targets)
             classify.save_classifier(classifier)
 
     elif arguments['classify']:
