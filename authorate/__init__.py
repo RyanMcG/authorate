@@ -247,14 +247,21 @@ def authorate(arguments):
             ret = 2
 
     elif arguments['process']:
+        # Cleanup the classifier dir
+        classify.clean_classifier_dir()
+
+        # Get and scale data from snippets
         session = get_session(engine)
         snippets = session.query(Book, Snippet).join(Snippet).all()
         data = [text_to_vector(snip.text) for _, snip in snippets]
+        scaler = classify.create_and_save_scaler(data)
+        scaled_data = scaler.transform(data)
         targets = [book.path_id for book, _ in snippets]
-        classify.clean_classifier_dir()
+
+        # Train the classifiers
         for (Cls, kwargs) in classify.classifier_types:
             classifier = Cls(**kwargs)
-            classifier.fit(data, targets)
+            classifier.fit(scaled_data, targets)
             classify.save_classifier(classifier)
 
     elif arguments['classify']:
@@ -270,7 +277,6 @@ def authorate(arguments):
             print("Converting raw data to vectors. . .")
         data = [text_to_vector(snip.text) for _, snip in snippets]
         targets = [book.path_id for book, _ in snippets]
-        print('')
         classify.test_all(engine, data, targets)
 
     else:

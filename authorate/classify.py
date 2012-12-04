@@ -1,11 +1,13 @@
 import os
+import sys
 from sklearn.externals import joblib
-from sklearn.naive_bayes import GaussianNB, MultinomialNB
+from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC, LinearSVC
 from sklearn.lda import LDA
 from sklearn import cross_validation
+from sklearn import preprocessing
 from authorate.model import get_session, Path
 from authorate.text_features import text_to_vector
 from sqlalchemy.exc import InterfaceError
@@ -43,12 +45,31 @@ def save_classifier(classifier):
     joblib.dump(classifier, classifer_path(classifier))
 
 
+def create_and_save_scaler(data):
+    """Create a scaler for the given data and save it to the disk."""
+    scaler = preprocessing.Scaler().fit(data)
+    create_classifier_dir()
+    joblib.dump(scaler, os.path.join(classifiers_dir,
+                                     scaler.__class__.__name__ + '.pkl'))
+    return scaler
+
+
+def load_scaler(root, files):
+    """Attempt to load a fitted scaler instance if it exists in files."""
+    if 'Scaler.pkl' in files:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            scaler = joblib.load(os.path.join(root, 'Scaler.pkl'))
+    else:
+        print("ERROR: Scaler class could not be found.")
+        sys.exit(9)
+    return scaler
+
 # A list of tules where the first element of each tuple is a classifier and the
 # second is a map of keyword arguments used to construct that classifier.
 classifier_types = [(SVC, {}),
                     (LinearSVC, {}),
                     (GaussianNB, {}),
-                    (MultinomialNB, {}),
                     (RandomForestClassifier, {}),
                     (DecisionTreeClassifier, {}),
                     (LDA, {})]
@@ -63,12 +84,16 @@ def classify_all(engine, snippet):
     print("Classifying snippet: \n\n{snippet}\n".format(
         snippet=formated_snippet))
 
-    for (ClsType, kwargs) in classifier_types:
+    root, _, files = os.walk(classifiers_dir).next()
+    scaler = load_scaler(root, files)
+    files.sort()
+
+    for classifier_path in filter(CLASSIFIER_REGEX.match, files):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            classifier = load_classifier(ClsType)
-
-        prediction = classifier.predict([text_to_vector(snippet)])
+            classifier = joblib.load(os.path.join(root, classifier_path))
+            prediction = classifier.predict(
+                scaler.transform([text_to_vector(snippet)]))
         try:
             path = session.query(Path).filter_by(id=prediction[0]).first()
             answer = path.name
@@ -86,7 +111,10 @@ def test_all(engine, data, targets):
     best_avg = 0.0
     winner = None
     root, _, files = os.walk(classifiers_dir).next()
+    scaler = load_scaler(root, files)
     files.sort()
+    scaled_data = scaler.transform(data)
+
     for classifier_path in filter(CLASSIFIER_REGEX.match, files):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -95,8 +123,9 @@ def test_all(engine, data, targets):
         shuffle_iter = cross_validation.ShuffleSplit(len(data),
                                                      n_iterations=10,
                                                      test_size=0.4)
-        cv_result = cross_validation.cross_val_score(classifier, data, targets,
-                                                     cv=shuffle_iter)
+
+        cv_result = cross_validation.cross_val_score(classifier, scaled_data,
+                                                     targets, cv=shuffle_iter)
         avg = numpy.average(cv_result)
 
         if avg >= best_avg:
