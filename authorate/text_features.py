@@ -90,6 +90,12 @@ class TextFeatures:
     def min_sentence_length(self):
         return min(self.__sentence_lengths())
 
+    def avg_sentence_length(self):
+        return numpy.average(self.__sentence_lengths())
+
+    def std_sentence_length(self):
+        return numpy.std(self.__sentence_lengths())
+
 
 if __name__ == "__main__":
     text1 = """Call me Ishmael."""
