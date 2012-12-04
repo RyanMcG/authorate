@@ -28,6 +28,8 @@ To install authorate from source: ::
     git clone git://github.com/RyanMcG/authorate.git
     cd authorate
     python setup.py install
+    # Or if you want to develop
+    python setup.py develop
 
 If you want to use authorate directly without installing it be sure to install
 the python dependencies first. ::
