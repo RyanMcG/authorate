@@ -125,7 +125,15 @@ def load_snippets_from_txt_file(txt_file, snippet_count, book_id):
 def load_snippets(book_id, book_path, snippet_count):
     """Load snippet count snippets from the given book."""
     with NamedTemporaryFile(suffix='.txt') as txt_file:
-        args_list = ['ebook-convert', book_path, txt_file.name]
+
+        # If the book_path is to a text file simply copy it instead of using
+        # `ebook-convert`.
+        if os.path.splitext(book_path)[1] == '.txt':
+            cmd = 'cp'
+        else:
+            cmd = 'ebook-convert'
+
+        args_list = [cmd, book_path, txt_file.name]
         with open(os.devnull, 'w') as stdout:
             return_value = subprocess.call(args_list, stdout=stdout)
         if return_value == 0:
