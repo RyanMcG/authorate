@@ -32,7 +32,7 @@ class TextFeatures:
     def _POS_freq_to_vector(self):
         dist = self.POS_freq()
         parts_of_speech = ["NN", "NNS", "NNP", "NNPS", "DT", "RB", "IN", "PRP",
-                           "CC", "VB", "VBD", "VBN", "JJ"]
+                           "CC", "CD", "VB", "VBD", "VBN", "JJ", "EX", "FW"]
         return [dist.freq(pos) for pos in parts_of_speech]
 
     def add_text(self, text):
