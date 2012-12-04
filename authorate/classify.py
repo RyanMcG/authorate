@@ -84,12 +84,16 @@ def classify_all(engine, snippet):
     print("Classifying snippet: \n\n{snippet}\n".format(
         snippet=formated_snippet))
 
-    for (ClsType, kwargs) in classifier_types:
+    root, _, files = os.walk(classifiers_dir).next()
+    scaler = load_scaler(root, files)
+    files.sort()
+
+    for classifier_path in filter(CLASSIFIER_REGEX.match, files):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            classifier = load_classifier(ClsType)
-
-        prediction = classifier.predict([text_to_vector(snippet)])
+            classifier = joblib.load(os.path.join(root, classifier_path))
+            prediction = classifier.predict(
+                scaler.transform([text_to_vector(snippet)]))
         try:
             path = session.query(Path).filter_by(id=prediction[0]).first()
             answer = path.name
@@ -107,7 +111,10 @@ def test_all(engine, data, targets):
     best_avg = 0.0
     winner = None
     root, _, files = os.walk(classifiers_dir).next()
+    scaler = load_scaler(root, files)
     files.sort()
+    scaled_data = scaler.transform(data)
+
     for classifier_path in filter(CLASSIFIER_REGEX.match, files):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -116,8 +123,9 @@ def test_all(engine, data, targets):
         shuffle_iter = cross_validation.ShuffleSplit(len(data),
                                                      n_iterations=10,
                                                      test_size=0.4)
-        cv_result = cross_validation.cross_val_score(classifier, data, targets,
-                                                     cv=shuffle_iter)
+
+        cv_result = cross_validation.cross_val_score(classifier, scaled_data,
+                                                     targets, cv=shuffle_iter)
         avg = numpy.average(cv_result)
 
         if avg >= best_avg:
