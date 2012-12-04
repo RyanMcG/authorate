@@ -251,6 +251,7 @@ def authorate(arguments):
         snippets = session.query(Book, Snippet).join(Snippet).all()
         data = [text_to_vector(snip.text) for _, snip in snippets]
         targets = [book.path_id for book, _ in snippets]
+        classify.clean_classifier_dir()
         for (Cls, kwargs) in classify.classifier_types:
             classifier = Cls(**kwargs)
             classifier.fit(data, targets)

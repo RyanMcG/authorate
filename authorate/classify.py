@@ -17,7 +17,18 @@ import re
 classifiers_dir = 'classifiers'
 
 
+def clean_classifier_dir():
+    """Clean out the classifiers directory."""
+    import shutil
+    root, dirs, files = os.walk(classifiers_dir).next()
+    for f in files:
+        os.remove(os.path.join(root, f))
+    for d in dirs:
+        shutil.rmtree(os.path.join(root, d))
+
+
 def classifer_path(classifier):
+    """Return a unique filepath to save the given classifier at."""
     return os.path.join(classifiers_dir, classifier.__class__.__name__ + '-' +
                         str(hash(classifier)) + '.pkl')
 
