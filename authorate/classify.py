@@ -1,6 +1,6 @@
 import os
 from sklearn.externals import joblib
-from sklearn.naive_bayes import GaussianNB, MultinomialNB
+from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC, LinearSVC
@@ -48,7 +48,6 @@ def save_classifier(classifier):
 classifier_types = [(SVC, {}),
                     (LinearSVC, {}),
                     (GaussianNB, {}),
-                    (MultinomialNB, {}),
                     (RandomForestClassifier, {}),
                     (DecisionTreeClassifier, {}),
                     (LDA, {})]
