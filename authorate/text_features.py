@@ -12,7 +12,11 @@ class TextFeatures:
 
     def __init__(self):
         self.tokens = []
+        self.text = ""
         self.fdist = FreqDist()
+
+    def __sentence_lengths(self):
+
 
     def _word_freq_to_vector(self):
         dist = self.word_freq()
@@ -36,6 +40,7 @@ class TextFeatures:
         return [dist.freq(pos) for pos in parts_of_speech]
 
     def add_text(self, text):
+        self.text += " " + text
         tokens = nltk.word_tokenize(text)
         self.tokens += tokens
         for token in tokens:
@@ -78,6 +83,9 @@ class TextFeatures:
 
     def unique_word_freq(self):
         return float(self.fdist.B()) / self.fdist.N()
+
+    def max_min_avg_sentence_length(self):
+
 
 if __name__ == "__main__":
     text1 = """Call me Ishmael."""
