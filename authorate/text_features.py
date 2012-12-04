@@ -71,7 +71,6 @@ class TextFeatures:
         return FreqDist(len(word) for word in self.tokens)
 
     def POS_freq(self):
-        #nltk.download('maxent_treebank_pos_tagger')
         tagged = nltk.pos_tag(self.tokens)
         pos_dist = FreqDist()
         for pos_pair in tagged:
