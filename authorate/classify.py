@@ -1,4 +1,5 @@
 import os
+import sys
 from sklearn.externals import joblib
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
@@ -6,6 +7,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC, LinearSVC
 from sklearn.lda import LDA
 from sklearn import cross_validation
+from sklearn import preprocessing
 from authorate.model import get_session, Path
 from authorate.text_features import text_to_vector
 from sqlalchemy.exc import InterfaceError
@@ -42,6 +44,26 @@ def save_classifier(classifier):
     create_classifier_dir()
     joblib.dump(classifier, classifer_path(classifier))
 
+
+def create_and_save_scaler(data):
+    """Create a scaler for the given data and save it to the disk."""
+    scaler = preprocessing.Scaler().fit(data)
+    create_classifier_dir()
+    joblib.dump(scaler, os.path.join(classifiers_dir,
+                                     scaler.__class__.__name__ + '.pkl'))
+    return scaler
+
+
+def load_scaler(root, files):
+    """Attempt to load a fitted scaler instance if it exists in files."""
+    if 'Scaler.pkl' in files:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            scaler = joblib.load(os.path.join(root, 'Scaler.pkl'))
+    else:
+        print("ERROR: Scaler class could not be found.")
+        sys.exit(9)
+    return scaler
 
 # A list of tules where the first element of each tuple is a classifier and the
 # second is a map of keyword arguments used to construct that classifier.
