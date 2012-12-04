@@ -9,12 +9,14 @@ from sqlalchemy.exc import InterfaceError
 import numpy
 import textwrap
 import warnings
+import re
 
 classifiers_dir = 'classifiers'
 
 
-def classifer_path(cls_type):
-    return os.path.join(classifiers_dir, cls_type.__name__ + '.pkl')
+def classifer_path(classifier):
+    return os.path.join(classifiers_dir, classifier.__class__.__name__ + '-' +
+                        str(hash(classifier)) + '.pkl')
 
 
 def create_classifier_dir():
@@ -24,11 +26,7 @@ def create_classifier_dir():
 
 def save_classifier(classifier):
     create_classifier_dir()
-    joblib.dump(classifier, classifer_path(classifier.__class__))
-
-
-def load_classifier(ClsType):
-    return joblib.load(classifer_path(ClsType))
+    joblib.dump(classifier, classifer_path(classifier))
 
 
 # A list of tules where the first element of each tuple is a classifier and the
@@ -61,13 +59,18 @@ def classify_all(engine, snippet):
         print("--> Answer: {answer}\n".format(answer=answer))
 
 
+CLASSIFIER_REGEX = re.compile('^.*-\d+\.pkl$')
+
+
 def test_all(engine, data, targets):
     best_avg = 0.0
     winner = None
-    for (ClsType, kwargs) in classifier_types:
+    root, _, files = os.walk(classifiers_dir).next()
+    files.sort()
+    for classifier_path in filter(CLASSIFIER_REGEX.match, files):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            classifier = load_classifier(ClsType)
+            classifier = joblib.load(os.path.join(root, classifier_path))
 
         shuffle_iter = cross_validation.ShuffleSplit(len(data),
                                                      n_iterations=10,
@@ -84,6 +87,6 @@ def test_all(engine, data, targets):
                                               numpy.std(cv_result))
 
         print("Classifier: {classifier}\n".format(classifier=classifier))
-        print("==> CV Result: {answer}\n".format(answer=answer))
+        print("==> CV Result: {answer}\n\n".format(answer=answer))
 
     print("*** The best classifier is {classifier} ***".format(classifier=winner))
