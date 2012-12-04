@@ -17,13 +17,11 @@ Setup
 
 Firstly, you'll need to install some system level dependencies
 
-**Arch Linux**
-::
-    sudo pacman -S gfortran gcc liblapack3 liblapack-dev libblas3 libblas-dev
-
 **Ubuntu**
 ::
     sudo apt-get install python-numpy python-scipy
+    # Or if you are installing from source . . .
+    sudo apt-get install -S gfortran gcc liblapack3 liblapack-dev libblas3 libblas-dev
 
 To install authorate from source: ::
 
