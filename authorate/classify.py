@@ -14,7 +14,6 @@ classifiers_dir = 'classifiers'
 
 
 def classifer_path(cls_type):
-    print(classifiers_dir)
     return os.path.join(classifiers_dir, cls_type.__name__ + '.pkl')
 
 
@@ -32,7 +31,9 @@ def load_classifier(ClsType):
     return joblib.load(classifer_path(ClsType))
 
 
-classifier_types = [SVC, GaussianNB]
+# A list of tules where the first element of each tuple is a classifier and the
+# second is a map of keyword arguments used to construct that classifier.
+classifier_types = [(SVC, {}), (GaussianNB, {})]
 
 
 def classify_all(engine, snippet):
@@ -44,7 +45,7 @@ def classify_all(engine, snippet):
     print("Classifying snippet: \n\n{snippet}\n".format(
         snippet=formated_snippet))
 
-    for ClsType in classifier_types:
+    for (ClsType, kwargs) in classifier_types:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             classifier = load_classifier(ClsType)
@@ -63,7 +64,7 @@ def classify_all(engine, snippet):
 def test_all(engine, data, targets):
     best_avg = 0.0
     winner = None
-    for ClsType in classifier_types:
+    for (ClsType, kwargs) in classifier_types:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             classifier = load_classifier(ClsType)
