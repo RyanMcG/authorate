@@ -1,4 +1,4 @@
-import nltk
+import re, numpy, nltk
 from nltk.probability import FreqDist
 
 
@@ -16,7 +16,9 @@ class TextFeatures:
         self.fdist = FreqDist()
 
     def __sentence_lengths(self):
-
+        sentences = res.split('\.|\?|\!', self.text)
+        sentences = filter(None, sentences)
+        return [len(sen.split()) for sen in sentences]
 
     def _word_freq_to_vector(self):
         dist = self.word_freq()
@@ -84,7 +86,11 @@ class TextFeatures:
     def unique_word_freq(self):
         return float(self.fdist.B()) / self.fdist.N()
 
-    def max_min_avg_sentence_length(self):
+    def max_sentence_length(self):
+        return max(self.__sentence_lengths())
+
+    def min_sentence_length(self):
+        return min(self.__sentence_lengths())
 
 
 if __name__ == "__main__":
