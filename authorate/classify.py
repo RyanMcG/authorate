@@ -1,7 +1,10 @@
 import os
 from sklearn.externals import joblib
-from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
+from sklearn.lda import LDA
 from sklearn import cross_validation
 from authorate.model import get_session, Path
 from authorate.text_features import text_to_vector
@@ -31,7 +34,12 @@ def save_classifier(classifier):
 
 # A list of tules where the first element of each tuple is a classifier and the
 # second is a map of keyword arguments used to construct that classifier.
-classifier_types = [(SVC, {}), (GaussianNB, {})]
+classifier_types = [(SVC, {}),
+                    (GaussianNB, {}),
+                    (RandomForestClassifier, {}),
+                    (DecisionTreeClassifier, {}),
+                    (MultinomialNB, {}),
+                    (LDA, {})]
 
 
 def classify_all(engine, snippet):
