@@ -37,7 +37,7 @@ the python dependencies first. ::
     # Assuming you are already in the authorate directory
     pip install -r requirements.txt
     # Install nltk extras
-    python -c 'nltk.download('maxent_treebank_pos_tagger')
+    python -c "import nltk; nltk.download('maxent_treebank_pos_tagger')"
 
 Usage
 =====
