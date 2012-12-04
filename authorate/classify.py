@@ -1,7 +1,10 @@
 import os
 from sklearn.externals import joblib
-from sklearn.naive_bayes import GaussianNB
-from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC, LinearSVC
+from sklearn.lda import LDA
 from sklearn import cross_validation
 from authorate.model import get_session, Path
 from authorate.text_features import text_to_vector
@@ -9,13 +12,25 @@ from sqlalchemy.exc import InterfaceError
 import numpy
 import textwrap
 import warnings
+import re
 
 classifiers_dir = 'classifiers'
 
 
-def classifer_path(cls_type):
-    print(classifiers_dir)
-    return os.path.join(classifiers_dir, cls_type.__name__ + '.pkl')
+def clean_classifier_dir():
+    """Clean out the classifiers directory."""
+    import shutil
+    root, dirs, files = os.walk(classifiers_dir).next()
+    for f in files:
+        os.remove(os.path.join(root, f))
+    for d in dirs:
+        shutil.rmtree(os.path.join(root, d))
+
+
+def classifer_path(classifier):
+    """Return a unique filepath to save the given classifier at."""
+    return os.path.join(classifiers_dir, classifier.__class__.__name__ + '-' +
+                        str(hash(classifier)) + '.pkl')
 
 
 def create_classifier_dir():
@@ -25,14 +40,18 @@ def create_classifier_dir():
 
 def save_classifier(classifier):
     create_classifier_dir()
-    joblib.dump(classifier, classifer_path(classifier.__class__))
+    joblib.dump(classifier, classifer_path(classifier))
 
 
-def load_classifier(ClsType):
-    return joblib.load(classifer_path(ClsType))
-
-
-classifier_types = [SVC, GaussianNB]
+# A list of tules where the first element of each tuple is a classifier and the
+# second is a map of keyword arguments used to construct that classifier.
+classifier_types = [(SVC, {}),
+                    (LinearSVC, {}),
+                    (GaussianNB, {}),
+                    (MultinomialNB, {}),
+                    (RandomForestClassifier, {}),
+                    (DecisionTreeClassifier, {}),
+                    (LDA, {})]
 
 
 def classify_all(engine, snippet):
@@ -44,7 +63,7 @@ def classify_all(engine, snippet):
     print("Classifying snippet: \n\n{snippet}\n".format(
         snippet=formated_snippet))
 
-    for ClsType in classifier_types:
+    for (ClsType, kwargs) in classifier_types:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             classifier = load_classifier(ClsType)
@@ -60,13 +79,18 @@ def classify_all(engine, snippet):
         print("--> Answer: {answer}\n".format(answer=answer))
 
 
+CLASSIFIER_REGEX = re.compile('^.*-\d+\.pkl$')
+
+
 def test_all(engine, data, targets):
     best_avg = 0.0
     winner = None
-    for ClsType in classifier_types:
+    root, _, files = os.walk(classifiers_dir).next()
+    files.sort()
+    for classifier_path in filter(CLASSIFIER_REGEX.match, files):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            classifier = load_classifier(ClsType)
+            classifier = joblib.load(os.path.join(root, classifier_path))
 
         shuffle_iter = cross_validation.ShuffleSplit(len(data),
                                                      n_iterations=10,
@@ -83,6 +107,6 @@ def test_all(engine, data, targets):
                                               numpy.std(cv_result))
 
         print("Classifier: {classifier}\n".format(classifier=classifier))
-        print("==> CV Result: {answer}\n".format(answer=answer))
+        print("==> CV Result: {answer}\n\n".format(answer=answer))
 
     print("*** The best classifier is {classifier} ***".format(classifier=winner))
