@@ -16,7 +16,9 @@ class TextFeatures:
         self.fdist = FreqDist()
 
     def __sentence_lengths(self):
-        sentences = res.split('\.|\?|\!', self.text)
+        # Split into sentences by end punctuation
+        sentences = re.split('\.|\?|\!', self.text)
+        # Remove empty sentences
         sentences = filter(None, sentences)
         return [len(sen.split()) for sen in sentences]
 
@@ -52,6 +54,10 @@ class TextFeatures:
         return ([self.avg_word_length(),
                  self.std_dev_word_length(),
                  float(self.max_word_length()),
+                 float(self.max_sentence_length()),
+                 float(self.min_sentence_length()),
+                 self.avg_sentence_length(),
+                 self.std_sentence_length(),
                  self.unique_word_freq()] +
                 self._word_freq_to_vector() +
                 self._punctuation_freq_vector() +
