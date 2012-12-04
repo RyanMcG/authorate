@@ -120,13 +120,13 @@ def test_all(engine, data, targets):
             warnings.simplefilter("ignore")
             classifier = joblib.load(os.path.join(root, classifier_path))
 
-        shuffle_iter = cross_validation.ShuffleSplit(len(data),
-                                                     n_iterations=10,
-                                                     test_size=0.4)
+            shuffle_iter = cross_validation.ShuffleSplit(len(data),
+                                                         n_iterations=10,
+                                                         test_size=0.4)
 
-        cv_result = cross_validation.cross_val_score(classifier, scaled_data,
-                                                     targets, cv=shuffle_iter)
-        avg = numpy.average(cv_result)
+            cv_result = cross_validation.cross_val_score(classifier, scaled_data,
+                                                         targets, cv=shuffle_iter)
+            avg = numpy.average(cv_result)
 
         if avg >= best_avg:
             best_avg = avg
