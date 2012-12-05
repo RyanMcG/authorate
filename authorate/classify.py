@@ -108,7 +108,7 @@ CLASSIFIER_REGEX = re.compile('^.*-\d+\.pkl$')
 
 
 def test_all(engine, data, targets):
-    best_avg = 0.0
+    best_score = 0.0
     winner = None
     root, _, files = os.walk(classifiers_dir).next()
     scaler = load_scaler(root, files)
@@ -127,15 +127,15 @@ def test_all(engine, data, targets):
             cv_result = cross_validation.cross_val_score(classifier, scaled_data,
                                                          targets, cv=shuffle_iter)
             avg = numpy.average(cv_result)
+            std = numpy.std(cv_result)
 
-        if avg >= best_avg:
-            best_avg = avg
+        if avg - std >= best_score:
+            best_score = avg - std
             winner = classifier
 
-        answer = "average={0} std={1}".format(numpy.average(cv_result),
-                                              numpy.std(cv_result))
+        answer = "average={0} \tstd={1}".format(avg, std)
 
-        print("Classifier: {classifier}\n".format(classifier=classifier))
-        print("==> CV Result: {answer}\n\n".format(answer=answer))
+        print("Classifier: {classifier}".format(classifier=classifier))
+        print(" CV Result: {answer}\n\n".format(answer=answer))
 
     print("*** The best classifier is {classifier} ***".format(classifier=winner))
