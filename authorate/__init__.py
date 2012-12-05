@@ -15,7 +15,7 @@ Arguments:
 
 Options:
   -C <classifiers-dir>        the directory to store or read classifiers from
-  -p, --prefix <path-prefix>  a prefix to the paths given in the paths file.
+  -p, --prefix <path-prefix>  a prefix to the paths given in the paths file. [default: .]
   -d, --db <path-to-db>       the sqlite database to use [default: snippets.db]
   -h, --help                  show this help message and exit
   -v, --verbose               print additional information
@@ -28,7 +28,6 @@ from model import create_db, get_session, Path, Book, Snippet
 from multiprocessing import cpu_count
 from authorate import classify
 from multiprocessing.pool import Pool
-from itertools import chain
 from tempfile import NamedTemporaryFile
 from codecs import EncodedFile
 from authorate.text_features import text_to_vector
@@ -192,7 +191,7 @@ def load_path(pool, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
     books = []
     full_path = os.path.join(prefix, path)
     if not os.path.exists(full_path):
-        display_error("The given path does not exist: {path}".format(
+        print("ERROR: The given path does not exist: {path}".format(
             path=full_path))
         return False
 
@@ -209,12 +208,16 @@ def load_path(pool, path, snippet_count=DEFAULT_SNIPPETS_COUNT, prefix='',
             session.add(book_inst)
             books.append(book_inst)
 
-    # Commit all of the books
-    session.commit()
+    if len(books) == 0:
+        print("ERROR: No books were found on the given path: {0}".format(path))
+        return False
+    else:
+        # Commit all of the books
+        session.commit()
 
-    # Load snippets from given books and commit them.
-    load_books(pool, books, snippet_count, multi_thread)
-    return True
+        # Load snippets from given books and commit them.
+        load_books(pool, books, snippet_count, multi_thread)
+        return True
 
 
 def authorate(arguments):
