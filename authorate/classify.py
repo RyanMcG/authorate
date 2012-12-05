@@ -67,12 +67,14 @@ def load_scaler(root, files):
 
 # A list of tules where the first element of each tuple is a classifier and the
 # second is a map of keyword arguments used to construct that classifier.
-classifier_types = [(SVC, {}),
-                    (LinearSVC, {}),
-                    (GaussianNB, {}),
-                    (RandomForestClassifier, {}),
-                    (DecisionTreeClassifier, {}),
-                    (LDA, {})]
+classifier_types = [
+    (SVC, {'C': 1.0, 'gamma': 0.01}),
+    (GaussianNB, {}),
+    (LinearSVC, {}),
+    (RandomForestClassifier, {}),
+    (DecisionTreeClassifier, {}),
+    (LDA, {})
+]
 
 
 def classify_all(engine, snippet):
