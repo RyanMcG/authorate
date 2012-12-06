@@ -1,5 +1,6 @@
 import re, numpy, nltk
-from nltk.probability import FreqDist
+from nltk.probability import FreqDist, ConditionalFreqDist
+from itertools import tee, izip
 
 
 def text_to_vector(text):
@@ -7,6 +8,12 @@ def text_to_vector(text):
     extr.add_text(text)
     return extr.to_vector()
 
+# From itertools recipes
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = tee(iterable)
+    next(b, None)
+    return izip(a, b)
 
 class TextFeatures:
     
@@ -22,6 +29,7 @@ class TextFeatures:
         self.fdist = FreqDist()
 
     def __sentence_lengths(self):
+        "Return a list of the lengths of sentences"
         # Split into sentences by end punctuation
         sentences = re.split('\.|\?|\!', self.text)
         # Remove empty sentences
@@ -30,11 +38,11 @@ class TextFeatures:
 
     def _word_freq_to_vector(self):
         dist = self.word_freq()
-        return [dist.freq(word) for word in most_common_words]
+        return [dist.freq(word) for word in TextFeatures.most_common_words]
 
     def _punctuation_freq_vector(self):
         dist = self.word_freq()
-        return [dist.freq(mark) for mark in punctuation]
+        return [dist.freq(mark) for mark in TextFeatures.punctuation]
 
     def _word_length_freq_to_vector(self):
         dist = self.word_length_freq()
@@ -42,7 +50,15 @@ class TextFeatures:
 
     def _POS_freq_to_vector(self):
         dist = self.POS_freq()
-        return [dist.freq(pos) for pos in parts_of_speech]
+        return [dist.freq(pos) for pos in TextFeatures.parts_of_speech]
+
+    def _POS_cond_freq_to_vector(self):
+        dist = self.POS_cond_freq()
+        freq_vector = []
+        for pos0 in TextFeatures.parts_of_speech:
+            for pos1 in TextFeatures.parts_of_speech:
+                freq_vector.append(dist[pos0].freq(pos1))
+        return freq_vector
 
     def add_text(self, text):
         self.text += " " + text
@@ -63,7 +79,8 @@ class TextFeatures:
                 self._word_freq_to_vector() +
                 self._punctuation_freq_vector() +
                 self._word_length_freq_to_vector() +
-                self._POS_freq_to_vector())
+                #self._POS_freq_to_vector()
+                self._POS_cond_freq_to_vector())
 
     def word_freq(self):
         return self.fdist
@@ -72,11 +89,20 @@ class TextFeatures:
         return FreqDist(len(word) for word in self.tokens)
 
     def POS_freq(self):
+        "Returns the frequency distribution of parts of speech"
         tagged = nltk.pos_tag(self.tokens)
         pos_dist = FreqDist()
         for pos_pair in tagged:
             pos_dist.inc(pos_pair[1])
         return pos_dist
+
+    def POS_cond_freq(self):
+        "Returns the conditional frequency distribution of parts of speech"
+        tagged = nltk.pos_tag(self.tokens)
+        cond_dist = ConditionalFreqDist()
+        pos = [word_pos[1] for word_pos in tagged]
+        [cond_dist[pair[0]].inc(pair[1]) for pair in pairwise(pos)]
+        return cond_dist
 
     def avg_word_length(self):
         return numpy.average([len(word) for word in self.tokens])
@@ -114,3 +140,4 @@ if __name__ == "__main__":
     extr.add_text(text1)
     extr.add_text(text2)
     print(extr.to_vector())
+    print(extr._POS_cond_freq_to_vector())
