@@ -1,4 +1,4 @@
-import re, numpy, nltk
+import numpy, nltk
 from nltk.probability import FreqDist, ConditionalFreqDist
 from itertools import tee, izip
 
@@ -18,7 +18,7 @@ def pairwise(iterable):
 class TextFeatures:
     
     parts_of_speech = ["NN", "NNS", "NNP", "NNPS", "DT", "RB", "IN", "PRP",
-                           "CC", "CD", "VB", "VBD", "VBN", "JJ", "EX", "FW"]
+                       "CC", "CD", "VB", "VBD", "VBN", "VBG", "JJ", "EX", "FW"]
     most_common_words = ["the", "of", "to", "and", "a", "for", "on"
                          "in", "is", "it", "you", "at"]
     punctuation = [".", ",", "!", "?", ";", ":"]
@@ -30,10 +30,8 @@ class TextFeatures:
 
     def __sentence_lengths(self):
         "Return a list of the lengths of sentences"
-        # Split into sentences by end punctuation
-        sentences = re.split('\.|\?|\!', self.text)
-        # Remove empty sentences
-        sentences = filter(None, sentences)
+        # Split into sentences
+        sentences = nltk.sent_tokenize(self.text)
         return [len(sen.split()) for sen in sentences]
 
     def _word_freq_to_vector(self):
