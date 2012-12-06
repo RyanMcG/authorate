@@ -19,7 +19,7 @@ class TextFeatures:
     
     parts_of_speech = ["NN", "NNS", "NNP", "NNPS", "DT", "RB", "IN", "PRP",
                            "CC", "CD", "VB", "VBD", "VBN", "JJ", "EX", "FW"]
-    most_common_words = ["the", "of", "to", "and", "a",
+    most_common_words = ["the", "of", "to", "and", "a", "for", "on"
                          "in", "is", "it", "you", "at"]
     punctuation = [".", ",", "!", "?", ";", ":"]
 
@@ -79,7 +79,7 @@ class TextFeatures:
                 self._word_freq_to_vector() +
                 self._punctuation_freq_vector() +
                 self._word_length_freq_to_vector() +
-                #self._POS_freq_to_vector()
+                #self._POS_freq_to_vector() +
                 self._POS_cond_freq_to_vector())
 
     def word_freq(self):
