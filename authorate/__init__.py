@@ -24,7 +24,7 @@ Options:
 """
 from docopt import docopt, printable_usage
 from sqlalchemy import create_engine
-from model import create_db, get_session, Path, Book, Snippet
+from model import create_db, get_session, Path, Book, Snippet, WordCount
 from multiprocessing import cpu_count
 from authorate import classify
 from multiprocessing.pool import Pool
@@ -236,6 +236,12 @@ def authorate(arguments):
     # Assume successful return value
     ret = 0
     if arguments['load']:
+
+        # Load in words and word counts from file
+        session = get_session(engine)
+        if len(session.query(WordCount).all()) == 0:
+            subprocess.call('sqlite3 ' + arguments['--db'] + ' < import_words.sql', shell=True)
+
         prefix = arguments['--prefix']
         if os.path.exists(prefix):
             # Determine how many snippets to get per path.
