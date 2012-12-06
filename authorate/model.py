@@ -70,17 +70,6 @@ class Snippet(Model, Base):
                                            position=self.position)
 
 
-class WordCount(Base):
-    word = Column(String, primary_key=True)
-    count = Column(Integer)
-
-    __tablename__ = "word_count"
-
-    def __init__(self, word, count):
-        self.word = word
-        self.count = count
-
-
 def create_db(engine):
     """Create the database and tables."""
     Base.metadata.create_all(engine)
