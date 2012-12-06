@@ -9,6 +9,12 @@ def text_to_vector(text):
 
 
 class TextFeatures:
+    
+    parts_of_speech = ["NN", "NNS", "NNP", "NNPS", "DT", "RB", "IN", "PRP",
+                           "CC", "CD", "VB", "VBD", "VBN", "JJ", "EX", "FW"]
+    most_common_words = ["the", "of", "to", "and", "a",
+                         "in", "is", "it", "you", "at"]
+    punctuation = [".", ",", "!", "?", ";", ":"]
 
     def __init__(self):
         self.tokens = []
@@ -24,13 +30,10 @@ class TextFeatures:
 
     def _word_freq_to_vector(self):
         dist = self.word_freq()
-        most_common_words = ["the", "of", "to", "and", "a",
-                             "in", "is", "it", "you", "at"]
         return [dist.freq(word) for word in most_common_words]
 
     def _punctuation_freq_vector(self):
         dist = self.word_freq()
-        punctuation = [".", ",", "!", "?", ";", ":"]
         return [dist.freq(mark) for mark in punctuation]
 
     def _word_length_freq_to_vector(self):
@@ -39,8 +42,6 @@ class TextFeatures:
 
     def _POS_freq_to_vector(self):
         dist = self.POS_freq()
-        parts_of_speech = ["NN", "NNS", "NNP", "NNPS", "DT", "RB", "IN", "PRP",
-                           "CC", "CD", "VB", "VBD", "VBN", "JJ", "EX", "FW"]
         return [dist.freq(pos) for pos in parts_of_speech]
 
     def add_text(self, text):
