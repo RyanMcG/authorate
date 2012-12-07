@@ -6,8 +6,7 @@ from authorate.model import WordCount
 
 
 def text_to_vector(text, session):
-    extr = TextFeatures(session)
-    extr.add_text(text)
+    extr = TextFeatures(text, session)
     return extr.to_vector()
 
 # From itertools recipes
@@ -21,25 +20,33 @@ class TextFeatures:
     
     parts_of_speech = ["NN", "NNS", "NNP", "NNPS", "DT", "RB", "IN", "PRP",
                        "CC", "CD", "VB", "VBD", "VBN", "VBG", "JJ", "EX", "FW"]
-    most_common_words = ["the", "of", "to", "and", "a", "for", "on"
-                         "in", "is", "it", "you", "at"]
+    most_common_words = ["the", "of", "and", "to", "a", "in", "for", "is"
+                         "on", "that", "by", "this", "with", "i", "you", "it",
+                         "not", "or", "be", "are", "from", "at", "as", "your",
+                         "all", "have", "new", "more", "an", "was", "we",
+                         "will", "home", "can", "us", "about", "if", "page",
+                         "my", "has", "search", "free"]
     punctuation = [".", ",", "!", "?", ";", ":"]
 
-    def __init__(self, session):
+    def __init__(self, text, session):
         self.session = session
-        self.tokens = []
-        self.text = ""
+        self.tokens = nltk.word_tokenize(text)
+        self.text = text
         self.fdist = FreqDist()
+        for token in self.tokens:
+            self.fdist.inc(token.lower())
+        self.tagged = nltk.pos_tag(self.tokens)
+        self.counts = self.__get_word_commonality_counts(self.text.split())
+        self.word_lengths = [len(word) for word in self.tokens]
+        self.sentences = nltk.sent_tokenize(self.text)
+        self.sentence_lengths = [len(sen.split()) for sen in self.sentences]
 
     def __get_word_commonality_counts(self, words):
         results = [self.session.query(WordCount).filter_by(word=w).first() for w in words]
-        return [w.count for w in words if w is not None]
-
-    def __sentence_lengths(self):
-        "Return a list of the lengths of sentences"
-        # Split into sentences
-        sentences = nltk.sent_tokenize(self.text)
-        return [len(sen.split()) for sen in sentences]
+        results = [w.count for w in results if w is not None]
+        if len(results) == 0:
+            return [0]
+        return results
 
     def _word_freq_to_vector(self):
         dist = self.word_freq()
@@ -65,12 +72,9 @@ class TextFeatures:
                 freq_vector.append(dist[pos0].freq(pos1))
         return freq_vector
 
-    def add_text(self, text):
-        self.text += " " + text
-        tokens = nltk.word_tokenize(text)
-        self.tokens += tokens
-        for token in tokens:
-            self.fdist.inc(token.lower())
+    def _word_rarity_freq_to_vector(self):
+        dist = self.word_rarity_freq()
+        return [dist.freq(i) for i in range(20)]
 
     def to_vector(self):
         return ([self.avg_word_length(),
@@ -80,9 +84,10 @@ class TextFeatures:
                  float(self.min_sentence_length()),
                  self.avg_sentence_length(),
                  self.std_sentence_length(),
-                 #self.avg_word_commonality(),
-                 #self.std_word_commonality(),
+                 float(self.avg_word_commonality()),
+                 float(self.std_word_commonality()),
                  self.unique_word_freq()] +
+                self._word_rarity_freq_to_vector() +
                 self._word_freq_to_vector() +
                 self._punctuation_freq_vector() +
                 self._word_length_freq_to_vector() +
@@ -98,62 +103,90 @@ class TextFeatures:
 
     def POS_freq(self):
         "Returns the frequency distribution of parts of speech"
-        tagged = nltk.pos_tag(self.tokens)
         pos_dist = FreqDist()
-        for pos_pair in tagged:
+        for pos_pair in self.tagged:
             pos_dist.inc(pos_pair[1])
         return pos_dist
 
     def POS_cond_freq(self):
         "Returns the conditional frequency distribution of parts of speech"
-        tagged = nltk.pos_tag(self.tokens)
         cond_dist = ConditionalFreqDist()
-        pos = [word_pos[1] for word_pos in tagged]
+        pos = [word_pos[1] for word_pos in self.tagged]
         [cond_dist[pair[0]].inc(pair[1]) for pair in pairwise(pos)]
         return cond_dist
 
+    def word_rarity_freq(self):
+        "Returns the frequency distribution of groups of word rarities"
+        rarity_dist = FreqDist()
+        for common in self.counts:
+            if common > 500000000:
+                rarity_dist.inc(0)
+            elif common > 450000000:
+                rarity_dist.inc(1)
+            elif common > 400000000:
+                rarity_dist.inc(2)
+            elif common > 350000000:
+                rarity_dist.inc(3)
+            elif common > 300000000:
+                rarity_dist.inc(4)
+            elif common > 250000000:
+                rarity_dist.inc(5)
+            elif common > 200000000:
+                rarity_dist.inc(6)
+            elif common > 150000000:
+                rarity_dist.inc(7)
+            elif common > 100000000:
+                rarity_dist.inc(8)
+            elif common > 80000000:
+                rarity_dist.inc(9)
+            elif common > 65000000:
+                rarity_dist.inc(10)
+            elif common > 50000000:
+                rarity_dist.inc(11)
+            elif common > 30000000:
+                rarity_dist.inc(12)
+            elif common > 10000000:
+                rarity_dist.inc(13)
+            elif common > 8000000:
+                rarity_dist.inc(14)
+            elif common > 5500000:
+                rarity_dist.inc(15)
+            elif common > 3000000:
+                rarity_dist.inc(16)
+            elif common > 1000000:
+                rarity_dist.inc(17)
+            elif common > 500000:
+                rarity_dist.inc(18)
+            else:
+                rarity_dist.inc(19)
+        return rarity_dist
+
     def avg_word_length(self):
-        return numpy.average([len(word) for word in self.tokens])
+        return numpy.average(self.word_lengths)
 
     def std_dev_word_length(self):
-        return numpy.std([len(word) for word in self.tokens])
+        return numpy.std(self.word_lengths)
 
     def max_word_length(self):
-        return max([len(word) for word in self.tokens])
+        return max(self.word_lengths)
 
     def unique_word_freq(self):
         return float(self.fdist.B()) / self.fdist.N()
 
     def max_sentence_length(self):
-        return max(self.__sentence_lengths())
+        return max(self.sentence_lengths)
 
     def min_sentence_length(self):
-        return min(self.__sentence_lengths())
+        return min(self.sentence_lengths)
 
     def avg_sentence_length(self):
-        return numpy.average(self.__sentence_lengths())
+        return numpy.average(self.sentence_lengths)
 
     def std_sentence_length(self):
-        return numpy.std(self.__sentence_lengths())
+        return numpy.std(self.sentence_lengths)
 
     def avg_word_commonality(self):
-        counts = self.__get_word_commonality_counts(self.text.split())
-        return numpy.average(counts)
+        return numpy.average(self.counts)
 
     def std_word_commonality(self):
-        counts = self.__get_word_commonality_counts(self.text.split())
-        return numpy.std(counts)
-
-    #def rare_word_freq(self):
-
-if __name__ == "__main__":
-    text1 = """Call me Ishmael."""
-    text2 = """Some years ago, never mind how long precisely,
-               having little or no money in my purse, and nothing
-               particular to interest me on shore, I thought I
-               would sail about a little and see the watery part
-               of the world."""
-    extr = TextFeatures()
-    extr.add_text(text1)
-    extr.add_text(text2)
-    print(extr.to_vector())
+        return numpy.std(self.counts)
