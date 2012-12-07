@@ -82,9 +82,7 @@ classifier_types = [
     (DecisionTreeClassifier, {'criterion': 'gini'}),  # better than 'entropy'
     (RandomForestClassifier, {'n_estimators': 36}),
     (GradientBoostingClassifier, {'n_estimators': 36}),  # More estimators is good too many is bad
-    (RandomForestClassifier, {'n_estimators': 25}),
-    (RandomForestClassifier, {'n_estimators': 100}),
-    (RandomForestClassifier, {'n_estimators': 250}),
+    (RandomForestClassifier, {'n_estimators': 250}),  # More is always better
     (LDA, {}),  # Number of components has little effect
     (RidgeClassifier, {'alpha': 0.2, 'normalize': False}),  # Lower alpha
 ]
