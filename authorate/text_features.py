@@ -20,8 +20,12 @@ class TextFeatures:
     
     parts_of_speech = ["NN", "NNS", "NNP", "NNPS", "DT", "RB", "IN", "PRP",
                        "CC", "CD", "VB", "VBD", "VBN", "VBG", "JJ", "EX", "FW"]
-    most_common_words = ["the", "of", "to", "and", "a", "for", "on"
-                         "in", "is", "it", "you", "at"]
+    most_common_words = ["the", "of", "and", "to", "a", "in", "for", "is"
+                         "on", "that", "by", "this", "with", "i", "you", "it",
+                         "not", "or", "be", "are", "from", "at", "as", "your",
+                         "all", "have", "new", "more", "an", "was", "we",
+                         "will", "home", "can", "us", "about", "if", "page",
+                         "my", "has", "search", "free"]
     punctuation = [".", ",", "!", "?", ";", ":"]
 
     def __init__(self, text, session):
