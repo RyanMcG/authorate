@@ -31,8 +31,9 @@ class TextFeatures:
         self.text = ""
         self.fdist = FreqDist()
 
-    def __get_word_commonality_counts(words):
-        return [session.query(WordCount).filter_by(word=w).first().count for w in words]
+    def __get_word_commonality_counts(self, words):
+        results = [self.session.query(WordCount).filter_by(word=w).first() for w in words]
+        return [w.count for w in words if w is not None]
 
     def __sentence_lengths(self):
         "Return a list of the lengths of sentences"
@@ -79,14 +80,15 @@ class TextFeatures:
                  float(self.min_sentence_length()),
                  self.avg_sentence_length(),
                  self.std_sentence_length(),
-                 self.avg_word_commonality(),
-                 self.std_word_commonality(),
+                 #self.avg_word_commonality(),
+                 #self.std_word_commonality(),
                  self.unique_word_freq()] +
                 self._word_freq_to_vector() +
                 self._punctuation_freq_vector() +
                 self._word_length_freq_to_vector() +
-                #self._POS_freq_to_vector() +
-                self._POS_cond_freq_to_vector())
+                self._POS_freq_to_vector()
+                #self._POS_cond_freq_to_vector()
+                )
 
     def word_freq(self):
         return self.fdist
@@ -135,13 +137,14 @@ class TextFeatures:
         return numpy.std(self.__sentence_lengths())
 
     def avg_word_commonality(self):
-        counts = TextFeatures.__get_word_commonality_counts(self.text.split())
-        return numpy.avg(counts)
+        counts = self.__get_word_commonality_counts(self.text.split())
+        return numpy.average(counts)
 
     def std_word_commonality(self):
-        counts = TextFeatures.__get_word_commonality_counts(self.text.split())
+        counts = self.__get_word_commonality_counts(self.text.split())
         return numpy.std(counts)
 
+    #def rare_word_freq(self):
 
 if __name__ == "__main__":
     text1 = """Call me Ishmael."""
