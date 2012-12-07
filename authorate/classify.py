@@ -32,12 +32,19 @@ def clean_classifier_dir():
 
 def classifer_path(classifier):
     """Return a unique filepath to save the given classifier at."""
-    return os.path.join(classifiers_dir, classifier.__class__.__name__ + '-' +
-                        str(hash(classifier)) + '.pkl')
+    clf_hash = hash(classifier)
+    save_path = os.path.join(classifiers_dir, classifier.__class__.__name__ +
+                             '-' + str(clf_hash) + '.pkl')
+    while(os.path.exists(save_path)):
+        clf_hash += 139
+        save_path = os.path.join(classifiers_dir, classifier.__class__.__name__
+                                 + '-' + str(clf_hash) + '.pkl')
+    return save_path
 
 
 def create_classifier_dir():
-    os.makedirs(classifiers_dir)
+    if not os.path.exists(classifiers_dir):
+        os.makedirs(classifiers_dir)
 
 
 def save_classifier(classifier):
