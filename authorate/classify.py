@@ -22,6 +22,7 @@ classifiers_dir = 'classifiers'
 def clean_classifier_dir():
     """Clean out the classifiers directory."""
     import shutil
+    create_classifier_dir()
     root, dirs, files = os.walk(classifiers_dir).next()
     for f in files:
         os.remove(os.path.join(root, f))
