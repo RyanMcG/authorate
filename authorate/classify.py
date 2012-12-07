@@ -36,8 +36,7 @@ def classifer_path(classifier):
 
 
 def create_classifier_dir():
-    if not os.path.exists(classifiers_dir):
-        os.mkdir(classifiers_dir)
+    os.makedirs(classifiers_dir)
 
 
 def save_classifier(classifier):
