@@ -6,8 +6,7 @@ from authorate.model import WordCount
 
 
 def text_to_vector(text, session):
-    extr = TextFeatures(session)
-    extr.add_text(text)
+    extr = TextFeatures(text, session)
     return extr.to_vector()
 
 # From itertools recipes
@@ -25,15 +24,19 @@ class TextFeatures:
                          "in", "is", "it", "you", "at"]
     punctuation = [".", ",", "!", "?", ";", ":"]
 
-    def __init__(self, session):
+    def __init__(self, text, session):
         self.session = session
-        self.tokens = []
-        self.text = ""
+        self.tokens = nltk.word_tokenize(text)
+        self.text = text
         self.fdist = FreqDist()
+        for token in tokens:
+            self.fdist.inc(token.lower())
+        self.tagged = nltk.pos_tag(self.tokens)
+        self.counts = self.__get_word_commonality_counts(self.text.split())
 
     def __get_word_commonality_counts(self, words):
         results = [self.session.query(WordCount).filter_by(word=w).first() for w in words]
-        return [w.count for w in words if w is not None]
+        return [w.count for w in results if w is not None]
 
     def __sentence_lengths(self):
         "Return a list of the lengths of sentences"
@@ -65,13 +68,6 @@ class TextFeatures:
                 freq_vector.append(dist[pos0].freq(pos1))
         return freq_vector
 
-    def add_text(self, text):
-        self.text += " " + text
-        tokens = nltk.word_tokenize(text)
-        self.tokens += tokens
-        for token in tokens:
-            self.fdist.inc(token.lower())
-
     def to_vector(self):
         return ([self.avg_word_length(),
                  self.std_dev_word_length(),
@@ -80,8 +76,8 @@ class TextFeatures:
                  float(self.min_sentence_length()),
                  self.avg_sentence_length(),
                  self.std_sentence_length(),
-                 #self.avg_word_commonality(),
-                 #self.std_word_commonality(),
+                 self.avg_word_commonality(),
+                 self.std_word_commonality(),
                  self.unique_word_freq()] +
                 self._word_freq_to_vector() +
                 self._punctuation_freq_vector() +
@@ -98,17 +94,15 @@ class TextFeatures:
 
     def POS_freq(self):
         "Returns the frequency distribution of parts of speech"
-        tagged = nltk.pos_tag(self.tokens)
         pos_dist = FreqDist()
-        for pos_pair in tagged:
+        for pos_pair in self.tagged:
             pos_dist.inc(pos_pair[1])
         return pos_dist
 
     def POS_cond_freq(self):
         "Returns the conditional frequency distribution of parts of speech"
-        tagged = nltk.pos_tag(self.tokens)
         cond_dist = ConditionalFreqDist()
-        pos = [word_pos[1] for word_pos in tagged]
+        pos = [word_pos[1] for word_pos in self.tagged]
         [cond_dist[pair[0]].inc(pair[1]) for pair in pairwise(pos)]
         return cond_dist
 
@@ -137,23 +131,9 @@ class TextFeatures:
         return numpy.std(self.__sentence_lengths())
 
     def avg_word_commonality(self):
-        counts = self.__get_word_commonality_counts(self.text.split())
-        return numpy.average(counts)
+        return numpy.average(self.counts)
 
     def std_word_commonality(self):
-        counts = self.__get_word_commonality_counts(self.text.split())
-        return numpy.std(counts)
+        return numpy.std(self.counts)
 
     #def rare_word_freq(self):
-
-if __name__ == "__main__":
-    text1 = """Call me Ishmael."""
-    text2 = """Some years ago, never mind how long precisely,
-               having little or no money in my purse, and nothing
-               particular to interest me on shore, I thought I
-               would sail about a little and see the watery part
-               of the world."""
-    extr = TextFeatures()
-    extr.add_text(text1)
-    extr.add_text(text2)
-    print(extr.to_vector())
