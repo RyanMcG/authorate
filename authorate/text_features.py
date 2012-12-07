@@ -33,16 +33,13 @@ class TextFeatures:
             self.fdist.inc(token.lower())
         self.tagged = nltk.pos_tag(self.tokens)
         self.counts = self.__get_word_commonality_counts(self.text.split())
+        self.word_lengths = [len(word) for word in self.tokens]
+        self.sentences = nltk.sent_tokenize(self.text)
+        self.sentence_lengths = [len(sen.split()) for sen in self.sentences]
 
     def __get_word_commonality_counts(self, words):
         results = [self.session.query(WordCount).filter_by(word=w).first() for w in words]
         return [w.count for w in results if w is not None]
-
-    def __sentence_lengths(self):
-        "Return a list of the lengths of sentences"
-        # Split into sentences
-        sentences = nltk.sent_tokenize(self.text)
-        return [len(sen.split()) for sen in sentences]
 
     def _word_freq_to_vector(self):
         dist = self.word_freq()
@@ -107,28 +104,28 @@ class TextFeatures:
         return cond_dist
 
     def avg_word_length(self):
-        return numpy.average([len(word) for word in self.tokens])
+        return numpy.average(self.word_lengths)
 
     def std_dev_word_length(self):
-        return numpy.std([len(word) for word in self.tokens])
+        return numpy.std(self.word_lengths)
 
     def max_word_length(self):
-        return max([len(word) for word in self.tokens])
+        return max(self.word_lengths)
 
     def unique_word_freq(self):
         return float(self.fdist.B()) / self.fdist.N()
 
     def max_sentence_length(self):
-        return max(self.__sentence_lengths())
+        return max(self.sentence_lengths)
 
     def min_sentence_length(self):
-        return min(self.__sentence_lengths())
+        return min(self.sentence_lengths)
 
     def avg_sentence_length(self):
-        return numpy.average(self.__sentence_lengths())
+        return numpy.average(self.sentence_lengths)
 
     def std_sentence_length(self):
-        return numpy.std(self.__sentence_lengths())
+        return numpy.std(self.sentence_lengths)
 
     def avg_word_commonality(self):
         return numpy.average(self.counts)
