@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, UnicodeText, ForeignKey
+from sqlalchemy import (Column, Integer, String, Unicode, UnicodeText,
+                        ForeignKey)
 from sqlalchemy.ext.declarative import (AbstractConcreteBase, declarative_base,
                                         declared_attr)
 from sqlalchemy.orm import relationship, sessionmaker
@@ -71,7 +72,7 @@ class Snippet(Model, Base):
 
 
 class WordCount(Base):
-    word = Column(String, primary_key=True)
+    word = Column(Unicode, primary_key=True)
     count = Column(Integer)
 
     __tablename__ = "word_count"
