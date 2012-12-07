@@ -3,9 +3,10 @@ import sys
 from sklearn.externals import joblib
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC, LinearSVC
 from sklearn.lda import LDA
+from sklearn.linear_model import RidgeClassifier
 from sklearn import cross_validation
 from sklearn import preprocessing
 from authorate.model import get_session, Path
@@ -75,12 +76,17 @@ def load_scaler(root, files):
 # A list of tules where the first element of each tuple is a classifier and the
 # second is a map of keyword arguments used to construct that classifier.
 classifier_types = [
-    (SVC, {'C': 1.0, 'gamma': 0.01}),
-    (GaussianNB, {}),
+    (SVC, {}),  # Various valus of C and gamma default of 1, 0.0 is best.
+    (GaussianNB, {}),  # No parameters
     (LinearSVC, {}),
-    (RandomForestClassifier, {}),
-    (DecisionTreeClassifier, {}),
-    (LDA, {})
+    (DecisionTreeClassifier, {'criterion': 'gini'}),  # better than 'entropy'
+    (RandomForestClassifier, {'n_estimators': 36}),
+    (GradientBoostingClassifier, {'n_estimators': 36}),  # More estimators is good too many is bad
+    (RandomForestClassifier, {'n_estimators': 25}),
+    (RandomForestClassifier, {'n_estimators': 100}),
+    (RandomForestClassifier, {'n_estimators': 250}),
+    (LDA, {}),  # Number of components has little effect
+    (RidgeClassifier, {'alpha': 0.2, 'normalize': False}),  # Lower alpha
 ]
 
 
