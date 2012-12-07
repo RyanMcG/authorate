@@ -1,4 +1,5 @@
-import numpy, nltk
+import numpy
+import nltk
 from sqlalchemy import Column, Integer, String
 from nltk.probability import FreqDist, ConditionalFreqDist
 from itertools import tee, izip
@@ -9,6 +10,7 @@ def text_to_vector(text, session):
     extr = TextFeatures(text, session)
     return extr.to_vector()
 
+
 # From itertools recipes
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
@@ -16,8 +18,9 @@ def pairwise(iterable):
     next(b, None)
     return izip(a, b)
 
+
 class TextFeatures:
-    
+
     parts_of_speech = ["NN", "NNS", "NNP", "NNPS", "DT", "RB", "IN", "PRP",
                        "CC", "CD", "VB", "VBD", "VBN", "VBG", "JJ", "EX", "FW"]
     most_common_words = ["the", "of", "and", "to", "a", "in", "for", "is"
@@ -42,7 +45,8 @@ class TextFeatures:
         self.sentence_lengths = [len(sen.split()) for sen in self.sentences]
 
     def __get_word_commonality_counts(self, words):
-        results = [self.session.query(WordCount).filter_by(word=w).first() for w in words]
+        results = [self.session.query(WordCount).filter_by(word=w).first() for
+                   w in words]
         results = [w.count for w in results if w is not None]
         if len(results) == 0:
             return [0]
