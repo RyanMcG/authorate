@@ -61,7 +61,7 @@ def load_scaler(root, files):
             warnings.simplefilter("ignore")
             scaler = joblib.load(os.path.join(root, 'Scaler.pkl'))
     else:
-        print("ERROR: Scaler class could not be found.")
+        print("ERROR: Scaler class could not be found. Did you run process?")
         sys.exit(9)
     return scaler
 
