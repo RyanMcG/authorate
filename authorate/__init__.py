@@ -288,8 +288,10 @@ def authorate(arguments):
     elif arguments['classify']:
         snip_file = arguments['<snippet-file>']
         input_files = [snip_file if snip_file else '-']
-        classify.classify_all(engine, " ".join([line.rstrip() for line in
-                                                fileinput.input(input_files)]))
+        classify.classify_all(
+            engine, " ".join(
+                [unicode(line.rstrip(), errors='ignore') for line in
+                 fileinput.input(input_files)]))
 
     elif arguments['test']:
         session = get_session(engine)
