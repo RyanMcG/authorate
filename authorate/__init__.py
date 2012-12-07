@@ -271,7 +271,7 @@ def authorate(arguments):
         # Get and scale data from snippets
         session = get_session(engine)
         snippets = session.query(Book, Snippet).join(Snippet).all()
-        data = [text_to_vector(snip.text) for _, snip in snippets]
+        data = [text_to_vector(snip.text, session) for _, snip in snippets]
         scaler = classify.create_and_save_scaler(data)
         scaled_data = scaler.transform(data)
         targets = [book.path_id for book, _ in snippets]
@@ -295,7 +295,7 @@ def authorate(arguments):
         snippets = session.query(Book, Snippet).join(Snippet).all()
         if VERBOSE:
             print("Converting raw data to vectors. . .")
-        data = [text_to_vector(snip.text) for _, snip in snippets]
+        data = [text_to_vector(snip.text, session) for _, snip in snippets]
         targets = [book.path_id for book, _ in snippets]
         classify.test_all(engine, data, targets)
 

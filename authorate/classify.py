@@ -108,7 +108,7 @@ def classify_all(engine, snippet):
             warnings.simplefilter("ignore")
             classifier = joblib.load(os.path.join(root, classifier_path))
             prediction = classifier.predict(
-                scaler.transform([text_to_vector(snippet)]))
+                scaler.transform([text_to_vector(snippet, session)]))
         try:
             path = session.query(Path).filter_by(id=prediction[0]).first()
             answer = path.name
