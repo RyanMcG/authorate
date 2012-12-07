@@ -80,7 +80,6 @@ classifier_types = [
     (GaussianNB, {}),  # No parameters
     (LinearSVC, {}),
     (DecisionTreeClassifier, {'criterion': 'gini'}),  # better than 'entropy'
-    (RandomForestClassifier, {'n_estimators': 36}),
     (GradientBoostingClassifier, {'n_estimators': 36}),  # More estimators is good too many is bad
     (RandomForestClassifier, {'n_estimators': 250}),  # More is always better
     (LDA, {}),  # Number of components has little effect
