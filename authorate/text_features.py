@@ -70,7 +70,7 @@ class TextFeatures:
 
     def _word_rarity_freq_to_vector(self):
         dist = self.word_rarity_freq()
-        return [dist.freq(i) for i in range(13)]
+        return [dist.freq(i) for i in range(20)]
 
     def to_vector(self):
         return ([self.avg_word_length(),
@@ -129,18 +129,32 @@ class TextFeatures:
                 rarity_dist.inc(5)
             elif common > 200000000:
                 rarity_dist.inc(6)
-            elif common > 100000000:
+            elif common > 150000000:
                 rarity_dist.inc(7)
-            elif common > 50000000:
+            elif common > 100000000:
                 rarity_dist.inc(8)
-            elif common > 5000000:
+            elif common > 80000000:
                 rarity_dist.inc(9)
-            elif common > 2000000:
+            elif common > 65000000:
                 rarity_dist.inc(10)
-            elif common > 500000:
+            elif common > 50000000:
                 rarity_dist.inc(11)
-            else:
+            elif common > 30000000:
                 rarity_dist.inc(12)
+            elif common > 10000000:
+                rarity_dist.inc(13)
+            elif common > 8000000:
+                rarity_dist.inc(14)
+            elif common > 5500000:
+                rarity_dist.inc(15)
+            elif common > 3000000:
+                rarity_dist.inc(16)
+            elif common > 1000000:
+                rarity_dist.inc(17)
+            elif common > 500000:
+                rarity_dist.inc(18)
+            else:
+                rarity_dist.inc(19)
         return rarity_dist
 
     def avg_word_length(self):
@@ -168,8 +182,6 @@ class TextFeatures:
         return numpy.std(self.sentence_lengths)
 
     def avg_word_commonality(self):
-        if numpy.isnan(numpy.min(self.counts)):
-            print "FOUND ONE"
         return numpy.average(self.counts)
 
     def std_word_commonality(self):
