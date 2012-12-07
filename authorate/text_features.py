@@ -29,7 +29,7 @@ class TextFeatures:
         self.tokens = nltk.word_tokenize(text)
         self.text = text
         self.fdist = FreqDist()
-        for token in tokens:
+        for token in self.tokens:
             self.fdist.inc(token.lower())
         self.tagged = nltk.pos_tag(self.tokens)
         self.counts = self.__get_word_commonality_counts(self.text.split())
@@ -39,7 +39,10 @@ class TextFeatures:
 
     def __get_word_commonality_counts(self, words):
         results = [self.session.query(WordCount).filter_by(word=w).first() for w in words]
-        return [w.count for w in results if w is not None]
+        results = [w.count for w in results if w is not None]
+        if len(results) == 0:
+            return [0]
+        return results
 
     def _word_freq_to_vector(self):
         dist = self.word_freq()
@@ -73,8 +76,8 @@ class TextFeatures:
                  float(self.min_sentence_length()),
                  self.avg_sentence_length(),
                  self.std_sentence_length(),
-                 self.avg_word_commonality(),
-                 self.std_word_commonality(),
+                 float(self.avg_word_commonality()),
+                 float(self.std_word_commonality()),
                  self.unique_word_freq()] +
                 self._word_freq_to_vector() +
                 self._punctuation_freq_vector() +
@@ -128,6 +131,8 @@ class TextFeatures:
         return numpy.std(self.sentence_lengths)
 
     def avg_word_commonality(self):
+        if numpy.isnan(numpy.min(self.counts)):
+            print "FOUND ONE"
         return numpy.average(self.counts)
 
     def std_word_commonality(self):
