@@ -1,0 +1,15 @@
+Classifier: RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=200, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x77796c0>,
+            verbose=0)
+ CV Result: average=0.46725 	std=0.0241466871434
+
+
+*** The best classifier is RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=200, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x77796c0>,
+            verbose=0) ***

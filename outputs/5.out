@@ -1,0 +1,23 @@
+Classifier: GradientBoostingClassifier(init=PriorProbabilityEstimator(), learn_rate=0.1,
+              loss=mdeviance, max_depth=3, max_features=325,
+              min_samples_leaf=1, min_samples_split=1, n_estimators=100,
+              random_state=<mtrand.RandomState object at 0x7b3aa20>,
+              subsample=1.0)
+ CV Result: average=0.4115 	std=0.0177552809046
+
+
+Classifier: RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=100, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x7b3a1e0>,
+            verbose=0)
+ CV Result: average=0.45475 	std=0.0222050106958
+
+
+*** The best classifier is RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=100, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x7b3a1e0>,
+            verbose=0) ***

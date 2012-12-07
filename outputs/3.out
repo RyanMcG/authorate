@@ -1,0 +1,50 @@
+Classifier: GradientBoostingClassifier(init=PriorProbabilityEstimator(), learn_rate=0.1,
+              loss=mdeviance, max_depth=3, max_features=325,
+              min_samples_leaf=1, min_samples_split=1, n_estimators=18,
+              random_state=<mtrand.RandomState object at 0x81a4a20>,
+              subsample=1.0)
+ CV Result: average=0.39125 	std=0.0157023087474
+
+
+Classifier: GradientBoostingClassifier(init=PriorProbabilityEstimator(), learn_rate=0.1,
+              loss=mdeviance, max_depth=3, max_features=325,
+              min_samples_leaf=1, min_samples_split=1, n_estimators=36,
+              random_state=<mtrand.RandomState object at 0x81a45e8>,
+              subsample=1.0)
+ CV Result: average=0.38025 	std=0.0256770812204
+
+
+Classifier: RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=18, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x81a49c0>,
+            verbose=0)
+ CV Result: average=0.3715 	std=0.0210416254125
+
+
+Classifier: RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=36, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x81a4120>,
+            verbose=0)
+ CV Result: average=0.413 	std=0.0207304124416
+
+
+Classifier: RidgeClassifier(alpha=0.2, class_weight=None, copy_X=True, fit_intercept=True,
+        normalize=False, tol=0.001)
+ CV Result: average=0.36475 	std=0.0124222582488
+
+
+Classifier: RidgeClassifier(alpha=1.0, class_weight=None, copy_X=True, fit_intercept=True,
+        normalize=False, tol=0.001)
+ CV Result: average=0.357 	std=0.0221302959763
+
+
+*** The best classifier is RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=36, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x81a4120>,
+            verbose=0) ***

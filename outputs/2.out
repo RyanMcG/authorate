@@ -1,0 +1,46 @@
+Classifier: DecisionTreeClassifier(compute_importances=False, criterion=gini,
+            max_depth=None, max_features=None, min_density=0.1,
+            min_samples_leaf=1, min_samples_split=2,
+            random_state=<mtrand.RandomState object at 0x836d990>)
+ CV Result: average=0.28425 	std=0.0203730827319
+
+
+Classifier: GaussianNB()
+ CV Result: average=0.25575 	std=0.0150020831887
+
+
+Classifier: LDA(n_components=None, priors=None)
+ CV Result: average=0.3585 	std=0.0213658606192
+
+
+Classifier: LDA(n_components=10, priors=None)
+ CV Result: average=0.36475 	std=0.01675
+
+
+Classifier: LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+     intercept_scaling=1, loss=l2, multi_class=ovr, penalty=l2, tol=0.0001,
+     verbose=0)
+ CV Result: average=0.34975 	std=0.021314607667
+
+
+Classifier: RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=10, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x836d948>,
+            verbose=0)
+ CV Result: average=0.3345 	std=0.0192613602843
+
+
+Classifier: RidgeClassifier(alpha=1.0, class_weight=None, copy_X=True, fit_intercept=True,
+        normalize=False, tol=0.001)
+ CV Result: average=0.36375 	std=0.0168541537907
+
+
+Classifier: SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+  kernel=rbf, probability=False, shrinking=True, tol=0.001, verbose=False)
+ CV Result: average=0.42225 	std=0.026491743997
+
+
+*** The best classifier is SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+  kernel=rbf, probability=False, shrinking=True, tol=0.001, verbose=False) ***

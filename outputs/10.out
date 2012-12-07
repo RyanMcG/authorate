@@ -1,0 +1,59 @@
+Classifier: DecisionTreeClassifier(compute_importances=False, criterion=gini,
+            max_depth=None, max_features=None, min_density=0.1,
+            min_samples_leaf=1, min_samples_split=2,
+            random_state=<mtrand.RandomState object at 0x834a0c0>)
+ CV Result: average=0.29425 	std=0.0256185967609
+
+
+Classifier: GaussianNB()
+ CV Result: average=0.329 	std=0.0323689666193
+
+
+Classifier: GradientBoostingClassifier(init=PriorProbabilityEstimator(), learn_rate=0.1,
+              loss=mdeviance, max_depth=3, max_features=105,
+              min_samples_leaf=1, min_samples_split=1, n_estimators=36,
+              random_state=<mtrand.RandomState object at 0x834a090>,
+              subsample=1.0)
+ CV Result: average=0.43175 	std=0.0152089611743
+
+
+Classifier: LDA(n_components=None, priors=None)
+ CV Result: average=0.444 	std=0.0128062484749
+
+
+Classifier: LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+     intercept_scaling=1, loss=l2, multi_class=ovr, penalty=l2, tol=0.0001,
+     verbose=0)
+ CV Result: average=0.42525 	std=0.0300717891054
+
+
+Classifier: RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=250, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x63979c0>,
+            verbose=0)
+ CV Result: average=0.4835 	std=0.0261055549644
+
+
+Classifier: RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=36, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x6397360>,
+            verbose=0)
+ CV Result: average=0.429 	std=0.0262963875846
+
+
+Classifier: RidgeClassifier(alpha=0.2, class_weight=None, copy_X=True, fit_intercept=True,
+        normalize=False, tol=0.001)
+ CV Result: average=0.4495 	std=0.0165755844543
+
+
+Classifier: SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+  kernel=rbf, probability=False, shrinking=True, tol=0.001, verbose=False)
+ CV Result: average=0.51125 	std=0.0327156308208
+
+
+*** The best classifier is SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+  kernel=rbf, probability=False, shrinking=True, tol=0.001, verbose=False) ***

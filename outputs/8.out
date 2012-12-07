@@ -1,0 +1,81 @@
+Classifier: DecisionTreeClassifier(compute_importances=False, criterion=gini,
+            max_depth=None, max_features=None, min_density=0.1,
+            min_samples_leaf=1, min_samples_split=2,
+            random_state=<mtrand.RandomState object at 0x3fd2798>)
+ CV Result: average=0.31325 	std=0.0255208248299
+
+
+Classifier: GaussianNB()
+ CV Result: average=0.3115 	std=0.0201308221392
+
+
+Classifier: GradientBoostingClassifier(init=PriorProbabilityEstimator(), learn_rate=0.1,
+              loss=mdeviance, max_depth=3, max_features=105,
+              min_samples_leaf=1, min_samples_split=1, n_estimators=36,
+              random_state=<mtrand.RandomState object at 0x3fd2ba0>,
+              subsample=1.0)
+ CV Result: average=0.43725 	std=0.0195400230297
+
+
+Classifier: LDA(n_components=None, priors=None)
+ CV Result: average=0.44725 	std=0.0131553221169
+
+
+Classifier: LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+     intercept_scaling=1, loss=l2, multi_class=ovr, penalty=l2, tol=0.0001,
+     verbose=0)
+ CV Result: average=0.43425 	std=0.0158528388625
+
+
+Classifier: RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=25, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x88f0cc0>,
+            verbose=0)
+ CV Result: average=0.43175 	std=0.0273415892003
+
+
+Classifier: RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=36, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x88f0df8>,
+            verbose=0)
+ CV Result: average=0.4425 	std=0.0162403817689
+
+
+Classifier: RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=100, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x865a2a0>,
+            verbose=0)
+ CV Result: average=0.47025 	std=0.0205380743985
+
+
+Classifier: RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=250, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x88f07e0>,
+            verbose=0)
+ CV Result: average=0.49825 	std=0.0210965044498
+
+
+Classifier: RidgeClassifier(alpha=0.2, class_weight=None, copy_X=True, fit_intercept=True,
+        normalize=False, tol=0.001)
+ CV Result: average=0.44675 	std=0.0243169179791
+
+
+Classifier: SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+  kernel=rbf, probability=False, shrinking=True, tol=0.001, verbose=False)
+ CV Result: average=0.49075 	std=0.021507266214
+
+
+*** The best classifier is RandomForestClassifier(bootstrap=True, compute_importances=False,
+            criterion=gini, max_depth=None, max_features=auto,
+            min_density=0.1, min_samples_leaf=1, min_samples_split=1,
+            n_estimators=250, n_jobs=1, oob_score=False,
+            random_state=<mtrand.RandomState object at 0x88f07e0>,
+            verbose=0) ***
