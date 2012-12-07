@@ -24,7 +24,8 @@ Options:
 """
 from docopt import docopt, printable_usage
 from sqlalchemy import create_engine
-from model import create_db, get_session, Path, Book, Snippet, WordCount
+from authorate.model import (create_db, get_session, Path, Book, Snippet,
+                             WordCount)
 from multiprocessing import cpu_count
 from authorate import classify
 from multiprocessing.pool import Pool
