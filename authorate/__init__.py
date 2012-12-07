@@ -48,8 +48,8 @@ USAGE_TEXT = printable_usage(__doc__)
 BOOK_REGEX = re.compile('^.*\.(mobi|txt|epub)$')
 TITLE_REGEX = re.compile('^(.*) - .*$')
 
-DEFAULT_SNIPPETS_COUNT = 50
-MIN_SNIPPET_SIZE = 70
+DEFAULT_SNIPPETS_COUNT = 100
+MIN_SNIPPET_SIZE = 128
 
 
 engine = None

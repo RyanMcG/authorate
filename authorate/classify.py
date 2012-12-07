@@ -3,9 +3,10 @@ import sys
 from sklearn.externals import joblib
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC, LinearSVC
 from sklearn.lda import LDA
+from sklearn.linear_model import RidgeClassifier
 from sklearn import cross_validation
 from sklearn import preprocessing
 from authorate.model import get_session, Path
@@ -22,6 +23,7 @@ classifiers_dir = 'classifiers'
 def clean_classifier_dir():
     """Clean out the classifiers directory."""
     import shutil
+    create_classifier_dir()
     root, dirs, files = os.walk(classifiers_dir).next()
     for f in files:
         os.remove(os.path.join(root, f))
@@ -31,13 +33,19 @@ def clean_classifier_dir():
 
 def classifer_path(classifier):
     """Return a unique filepath to save the given classifier at."""
-    return os.path.join(classifiers_dir, classifier.__class__.__name__ + '-' +
-                        str(hash(classifier)) + '.pkl')
+    clf_hash = hash(classifier)
+    save_path = os.path.join(classifiers_dir, classifier.__class__.__name__ +
+                             '-' + str(clf_hash) + '.pkl')
+    while(os.path.exists(save_path)):
+        clf_hash += 139
+        save_path = os.path.join(classifiers_dir, classifier.__class__.__name__
+                                 + '-' + str(clf_hash) + '.pkl')
+    return save_path
 
 
 def create_classifier_dir():
     if not os.path.exists(classifiers_dir):
-        os.mkdir(classifiers_dir)
+        os.makedirs(classifiers_dir)
 
 
 def save_classifier(classifier):
@@ -61,18 +69,23 @@ def load_scaler(root, files):
             warnings.simplefilter("ignore")
             scaler = joblib.load(os.path.join(root, 'Scaler.pkl'))
     else:
-        print("ERROR: Scaler class could not be found.")
+        print("ERROR: Scaler class could not be found. Did you run process?")
         sys.exit(9)
     return scaler
 
 # A list of tules where the first element of each tuple is a classifier and the
 # second is a map of keyword arguments used to construct that classifier.
-classifier_types = [(SVC, {}),
-                    (LinearSVC, {}),
-                    (GaussianNB, {}),
-                    (RandomForestClassifier, {}),
-                    (DecisionTreeClassifier, {}),
-                    (LDA, {})]
+classifier_types = [
+    (SVC, {}),  # Various valus of C and gamma default of 1, 0.0 is best.
+    (GaussianNB, {}),  # No parameters
+    (LinearSVC, {}),
+    (DecisionTreeClassifier, {'criterion': 'gini'}),  # better than 'entropy'
+    (RandomForestClassifier, {'n_estimators': 36}),
+    (GradientBoostingClassifier, {'n_estimators': 36}),  # More estimators is good too many is bad
+    (RandomForestClassifier, {'n_estimators': 250}),  # More is always better
+    (LDA, {}),  # Number of components has little effect
+    (RidgeClassifier, {'alpha': 0.2, 'normalize': False}),  # Lower alpha
+]
 
 
 def classify_all(engine, snippet):
